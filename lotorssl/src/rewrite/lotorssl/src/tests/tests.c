@@ -8,7 +8,7 @@
 
 uint8_t test_ecdsa(void) {
   // Test vectors: elliptic curve domain parameters, short Weierstrass model y^2 = x^3 + ax + b (mod N)
-  long d = 0, h = 0x789abcde, sets[10][6] = {
+  i64 d = 0, h = 0x789abcde, sets[10][6] = {
     // a,   b,  modulus N, base point G, order(G, E), cofactor
     {355, 671, 1073741789, 13693, 10088, 1073807281},
     {  0,   7,   67096021,  6580,   779,   16769911}, // 4
@@ -31,7 +31,7 @@ uint8_t test_ecdsa(void) {
 }
 
 uint8_t test_ecdsa2(void) {
-  long d = 0, h = 0xdeadbeef0, set[6] = {3, 2, 5, 2, 1, 5};
+  i64 d = 0, h = 0xdeadbeef0, set[6] = {3, 2, 5, 2, 1, 5};
   curve e;
   if (curve_init(&e, set)) {
     assert(ecdsa(h, d, &e) == 0);
@@ -40,7 +40,7 @@ uint8_t test_ecdsa2(void) {
 }
 
 uint8_t test_ecdsaloop(void) {
-  long d = 0, h = 0xdeadbeef, set[6] = {3, 2, 5, 2, 1, 5};
+  i64 d = 0, h = 0xdeadbeef, set[6] = {3, 2, 5, 2, 1, 5};
   curve e;
   for (int i = 0; i < 1000000; i++)
   if (curve_init(&e, set)) {
