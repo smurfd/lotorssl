@@ -1,9 +1,7 @@
 // Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
 #include <stdio.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdbool.h>
 #include "keys.h"
 
@@ -101,15 +99,14 @@ void bit_unpack(uint8_t byte[], const u64 big[]) {
 //
 // Securely randomize arrays
 static void u64rnd_array(uint8_t h[], u64 k[], int len) {
-  u64 f7 = 0x7fffffffffffffff;
-  int r[2*len], f = open("/dev/urandom", O_RDONLY);
-  int rr = read(f, &r, sizeof r);
-  close(f);
-  if (rr >= 0)
-    for (int i = 0; i < len; ++i) {
-      h[i] = (uint8_t)(r[i] & f7);
-      k[i] = (u64)(r[i] & f7);
-    }
+  u64 f7 = 0x7fffffffffffffff, r[2 * len];
+  FILE *f = fopen("/dev/urandom", "r");
+  fread(&r, sizeof(u64), len, f);
+  fclose(f);
+  for (int i = 0; i < len; ++i) {
+    h[i] = (uint8_t)(r[i] & f7);
+    k[i] = (u64)(r[i] & f7);
+  }
 }
 
 //

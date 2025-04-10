@@ -1,9 +1,6 @@
 // Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
 #ifndef KEYS_H
 #define KEYS_H 1
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #define BLOCK 1024
 #define LEN 4096
 #define BYTES 48
