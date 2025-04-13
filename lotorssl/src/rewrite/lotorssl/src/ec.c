@@ -98,4 +98,3 @@ void debug_printcurve(const curve *c) {
   printuint32("mod_p", r2);
   printuint32("corkp", correctp);
 }
-

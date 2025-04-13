@@ -24,4 +24,3 @@ curve *getcurve(void);
 
 void debug_printcurve(const curve *c);
 #endif
-

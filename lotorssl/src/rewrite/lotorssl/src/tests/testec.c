@@ -15,4 +15,3 @@ int main(void) {
   debug_printcurve(c);
   printf("OK\n");
 }
-
