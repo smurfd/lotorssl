@@ -7,8 +7,10 @@
 #include "ec.h"
 
 // turning the rosetta code ecdsa example to use arrays. possible?
+// ugg not uint32, but long ie +-
 
-// Helpers
+// ----- Helpers -----
+
 static inline void str2uint32(uint32_t *r, const char *s) {
   for (uint8_t i = 0; i < 64; i++) {
     uint32_t val = (uint32_t)(s[i] < 'a' ? s[i] - '0' : s[i] - 'a' + 10);
@@ -36,7 +38,44 @@ static inline uint32_t checkbit(const uint32_t *a, const int16_t b) {
   return (a[b >> 5] & ((uint32_t)1 << (b & 0x01f)));
 }
 
-// Math
+// ----- Math -----
+
+// add a and b
+static inline uint32_t add(uint32_t *r, const uint32_t *a, const uint32_t *b) {
+  uint32_t ovr = 0;
+  for (uint8_t i = 0; i < 8; ++i) {
+    uint32_t s = a[i] + b[i] + ovr;
+    if (s != a[i]) ovr = (s < a[i]);
+    r[i] = s;
+  }
+  return ovr;
+}
+
+// sub a and b
+static inline uint32_t sub(uint32_t *r, const uint32_t *a, const uint32_t *b) {
+  uint32_t ovr = 0;
+  for (uint8_t i = 0; i < 8; ++i) {
+    uint32_t s = a[i] - b[i] - ovr;
+    if (s != a[i]) ovr = (s > a[i]);
+    r[i] = s;
+  }
+  return ovr;
+}
+
+// multiply a and b
+static inline void mul(uint32_t *r, const uint32_t *a, const uint32_t* b) {
+  memset(r, 0, sizeof(uint32_t) * 8);
+  for (uint8_t i = 0; i < 8; i++) {
+    uint32_t carry = 0;
+    for (uint8_t j = 0; j < 8; j++) {
+      uint64_t product = (uint64_t)a[j] * b[i] + r[i + j] + carry;
+      r[i + j] = product & 0xffffffff;
+      carry = product >> 32;
+    }
+    r[i + 8] = carry;
+  }
+}
+
 // return mod(a, n)
 static inline void mod_n(uint32_t *r, const uint32_t *a, const curve *c) {
   uint32_t t0 = a[0], t1 = a[1], t2 = a[2], t3 = a[3], t4 = a[4], t5 = a[5], t6 = a[6], t7 = a[7], r0 = 0;
@@ -75,7 +114,22 @@ static inline void mod_p(uint32_t *r, const uint32_t *a, const curve *c) {
   r[0] = t0; r[1] = t1; r[2] = t2; r[3] = t3; r[4] = t4; r[5] = t5; r[6] = t6; r[7] = t7;
 }
 
-// Public
+// return the discriminant of the curve
+static inline void discriminant(uint32_t *r, const curve *c) {
+  uint32_t a[8], b[8], r1[8] = {0}, aa[8] = {0}, aar[8] = {0}, aarr[8] = {0}, aarrr[8] = {0}, four[8] = {4, 0, 0, 0, 0, 0, 0, 0};
+  memcpy(a, c->a, 8 * sizeof(uint32_t));
+  memcpy(b, c->b, 8 * sizeof(uint32_t));
+  mul(aa, a, a);
+  mod_n(aar, aa, c);
+  mul(aarr, aar, a);
+  mod_n(aarrr, aarr, c);
+  mul(r1, four, aarrr);
+  // return mod_n(-16 * (c + 27 * mod_n(b * b, e)), e);
+}
+
+
+// ----- Public -----
+
 curve *getcurve(void) {
   return &c;
 }
