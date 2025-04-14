@@ -11,7 +11,7 @@ struct curve_t {
 };
 
 typedef struct curve_t curve;
-static curve c = { // secp256k1
+static curve e = { // secp256k1
   {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000}, // a
   {0x00000007, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000}, // b
   {0xd0364141, 0xbfd25e8c, 0xaf48a03b, 0xbaaedce6, 0xfffffffe, 0xffffffff, 0xffffffff, 0xffffffff}, // n
@@ -22,5 +22,5 @@ static curve c = { // secp256k1
 
 curve *getcurve(void);
 
-void debug_printcurve(const curve *c);
+void debug_printcurve(const curve *e);
 #endif
