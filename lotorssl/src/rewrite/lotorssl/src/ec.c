@@ -134,6 +134,18 @@ curve *getcurve(void) {
   return &e;
 }
 
+void make_keypair(uint32_t *pub, uint32_t *pri, const curve *e) {
+  // TODO
+}
+
+void sign(uint32_t *pri, uint32_t *hash, uint32_t hlen, uint32_t *sig, const curve *e) {
+  // TODO
+}
+
+void verify(uint32_t *pub, uint32_t *hash, uint32_t hlen, uint32_t *sig, const curve *e) {
+  // TODO
+}
+
 // Public debug
 void debug_printcurve(const curve *e) {
   printuint32("a ", e->a);

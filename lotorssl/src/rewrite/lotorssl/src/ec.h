@@ -23,4 +23,7 @@ static curve e = { // secp256k1
 curve *getcurve(void);
 
 void debug_printcurve(const curve *e);
+void make_keypair(uint32_t *pub, uint32_t *pri, const curve *e);
+void sign(uint32_t *pri, uint32_t *hash, uint32_t hlen, uint32_t *sig, const curve *e);
+void verify(uint32_t *pub, uint32_t *hash, uint32_t hlen, uint32_t *sig, const curve *e);
 #endif
