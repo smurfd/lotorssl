@@ -114,9 +114,11 @@ static inline void mod_p(uint32_t *r, const uint32_t *a, const curve *e) {
   r[0] = t0; r[1] = t1; r[2] = t2; r[3] = t3; r[4] = t4; r[5] = t5; r[6] = t6; r[7] = t7;
 }
 
-// return the discriminant of the curve
+// return the discriminant of the curve E
 static inline void discriminant(uint32_t *r, const curve *e) {
-  uint32_t a[8], b[8], r1[8] = {0}, aa[8] = {0}, aar[8] = {0}, aarr[8] = {0}, aarrr[8] = {0}, four[8] = {4, 0, 0, 0, 0, 0, 0, 0};
+  uint32_t a[8], r1[8] = {0}, aa[8] = {0}, aar[8] = {0}, aarr[8] = {0}, aarrr[8] = {0}, four[8] = {0x4, 0, 0, 0, 0, 0, 0, 0};
+  uint32_t b[8], bb[8] = {0}, bbr[8] = {0}, tw7[8] = {0x1b, 0, 0, 0, 0, 0, 0, 0}, bbtw[8] = {0}, r1bb[8] = {0};
+  uint32_t six10[8] = {0x10, 0, 0, 0, 0, 0, 0, 0};
   memcpy(a, e->a, 8 * sizeof(uint32_t));
   memcpy(b, e->b, 8 * sizeof(uint32_t));
   mul(aa, a, a);
@@ -124,9 +126,44 @@ static inline void discriminant(uint32_t *r, const curve *e) {
   mul(aarr, aar, a);
   mod_n(aarrr, aarr, e);
   mul(r1, four, aarrr);
-  // return mod_n(-16 * (c + 27 * mod_n(b * b, e)), e);
+
+  mul(bb, b, b);
+  mod_n(bbr, bb, e);
+  mul(bbtw, bbr, tw7);
+  add(r1bb, bbtw, r1);
+  mul(bb, six10, r1bb);
+  mod_n(r, bb, e);
 }
 
+// ----- Points -----
+
+// return if point coordinates a and b is zero
+static inline uint8_t point_zero(const uint32_t *a, const uint32_t *b) {
+  uint8_t az = 0, bz = 0;
+  if (a[0] == 0 && memcmp(a, a + 1, (8 - 1) * sizeof(a[0])) == 0) az = 1;
+  if (b[0] == 0 && memcmp(b, b + 1, (8 - 1) * sizeof(b[0])) == 0) bz = 1;
+  return (az & bz);
+}
+
+// return if point coordinates a and b is on curve E
+static inline uint8_t point_oncurve(const uint32_t *a, const uint32_t *b, const curve *e) {
+  uint32_t r[8], s[8], aaa[8], aa[8], aa1[8], an[8], bb[8], ran[8];
+  if (!point_zero(a, b)) {
+    mul(aa, a, a);
+    add(aa1, e->a, aa);
+    mod_n(aaa, aa1, e);
+    mul(an, aaa, a);
+    add(ran, e->b, an);
+    mod_n(r, ran, e);
+
+    mul(bb, b, b);
+    mod_n(s, bb, e);
+  }
+  for (int8_t i = 7; i >= 0; i--) {
+    if (r[i] != s[i]) return 0;
+  }
+  return 1;
+}
 
 // ----- Public -----
 
@@ -135,6 +172,8 @@ curve *getcurve(void) {
 }
 
 void make_keypair(uint32_t *pub, uint32_t *pri, const curve *e) {
+  getrandom(pri, 8);
+  printuint32("random", pri);
   // TODO
 }
 

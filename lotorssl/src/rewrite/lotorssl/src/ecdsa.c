@@ -37,7 +37,7 @@ static inline i64 mod_r(i64 a, const curve *e) {
 // return the discriminant of E
 static inline i64 disc(const curve *e) {
   i64 a = e->a, b = e->b, c = 4 * mod_n(a * mod_n(a * a, e), e);
-  return mod_n(-16 * (c + 27 * mod_n(b * b, e)), e);
+  return mod_n(16 * (c + 27 * mod_n(b * b, e)), e); // -16 not needed?
 }
 
 // return 1 if P = zerO
