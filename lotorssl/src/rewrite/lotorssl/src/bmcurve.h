@@ -12,7 +12,7 @@ typedef struct Prime Prime;
 typedef struct Field {
   bint p[1], x[1];
   void (*init)(bint *x, Field*);
-  void (*initint)(uint32_t x, Field*);
+  void (*initint)(uint32_t x, bint *p, Field*);
   void (*get)(bint *ret, Field*);
   int8_t (*eq)(Field*, Field*);
   void (*add)(Field*, Field*, Field*);
@@ -25,7 +25,7 @@ typedef struct Prime {
   Field field;
   bint P[1];
   void (*init)(bint *x, Prime*);
-  void (*initint)(uint32_t x, Prime*);
+  void (*initint)(uint32_t x, bint *p1, Prime*);
   void (*get)(bint *ret, Prime*);
 } Prime;
   
@@ -33,7 +33,7 @@ typedef struct Order {
   Field field;
   bint N[1];
   void (*init)(bint *x, Order*);
-  void (*initint)(uint32_t x, Order*);
+  void (*initint)(uint32_t x, bint *p1, Order*);
   void (*get)(bint *ret, Order*);
 } Order;
   
@@ -54,5 +54,6 @@ typedef struct Curve {
 } Curve;
 
 void Ftester(void);
+void Ftester_sanity(void);
 #endif
 

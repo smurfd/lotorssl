@@ -35,38 +35,8 @@ int main(void) {
     bprint2("ds", &r);
     memcpy(d.wrd, r.wrd, LEN * sizeof(uint32_t));
   }
-/*
-  Field field0, field1, field2, field3;
-  printf("--------- Testvalues -------------------------------------------\n");
-  uint32_t tmp[8] = {0,0,0,0,0,0,0,23};
-  memcpy(field0.p->wrd, tmp, 8 * sizeof(uint32_t));
-*/
-//  field0.init = Field_init;
-//  field0.initint(0, &field0);
-/*  field0.initint = Field_initint;
-  field1.initint = Field_initint;
-  field2.initint = Field_initint;
-  field3.initint = Field_initint;
-  memcpy(field0.p, tmp, sizeof(uint32_t) * 8);
-  memcpy(field1.p, tmp, sizeof(uint32_t) * 8);
-  memcpy(field2.p, tmp, sizeof(uint32_t) * 8);
-  memcpy(field3.p, tmp, sizeof(uint32_t) * 8);
-  field0.initint(0, &field0);
-  field1.initint(12, &field1);
-  field2.initint(20, &field2);
-  field3.initint(9, &field3);
-*/
-
-
+  Ftester_sanity();
   Ftester();
-
-/*
-  F fff;
-  fff.init = F_init;
-  fff.init(666, &fff);
-*/
   printf("ok\n");
 }
-
-
 
