@@ -361,11 +361,8 @@ void Ftester(void) {
   order1.initint = Order_initint;
   order2.initint = Order_initint;
   order1.initint(42, p1, &order1);
-  //order1.initint(42, &order1);
-  //order2.initint(24, &order2);
   order2.initint(24, p1, &order2);
   bint x[1], y[1];
-//  uint32_t x[8] = {0}, y[8] = {0};
   Prime px, py, prime_retp, prime_retq, pz, po, qo;
   px.init = Prime_init;
   py.init = Prime_init;
@@ -377,15 +374,10 @@ void Ftester(void) {
   px.init(x, &px);
   py.init(y, &py);
   pz.initint(0, p1, &pz);
-  //pz.initint(0, &pz);
   po.init(order1.field.x, &po);
   qo.init(order2.field.x, &qo);
 
   Point G, G2, GR, p, q, pop, qop, infinity;
-  //printuint32("PTXXX", x);
-  //printuint32("PTXXX", px.field.x);
-  //printuint32("PTXXX", y);
-  //printuint32("PTXXX", py.field.x);
   G.init = Point_init;
   G2.init = Point_init;
   GR.init = Point_init;
@@ -396,43 +388,25 @@ void Ftester(void) {
   infinity.init = Point_init;
   G.init(&px, &py, &G);
   printf("p----\n");
-  //G->init(&px, &py, &G);
-  //GR->init(&pz, &pz, GR);
   printf("pp---\n");
   G2.init(&po, &py, &G2);
   bprint("Gpo", po.field.x);
   bprint("Gqo", qo.field.x);
   bprint("GX", G.prime_x.field.x);
   bprint("GY", G.prime_y.field.x);
-  //G.init(&po, &py, &G2);
   printf("p----\n");
-
-  //printuint32("PTXXX", G.prime_x.field.x);
-  //printuint32("PTXXX", G.prime_y.field.x);
-
   GR.init(&pz, &pz, &GR);
-
   p.init(&pz, &pz, &p);
   q.init(&pz, &pz, &q);
   infinity.init(&pz, &pz, &infinity);
   pop.init(&po, &po, &pop);//&pz, &pop);
   qop.init(&qo, &qo, &qop);//&pz, &qop);
-
   bprint("GpopX", pop.prime_x.field.x);
   bprint("GqopY", qop.prime_y.field.x);
-  //G.init(&po, &py, &G2);
-  //printuint32("PTXXX", pop.prime_x.field.x);
-  //printuint32("PTXXX", qop.prime_x.field.x);
-  //G.init(&px, &py, &G);
-  printf("xxxxxxxx\n");
   p.mul = Point_mul;
   q.mul = Point_mul;
-  p.mul(&p, &G, &pop);
-  q.mul(&q, &G, &qop);
-  //Point_mul(&p, &G, &pop); // p = c.G * Order(42)
-  //exit(0);
-  //Point_mul(&q, &G, &qop); // q = c.G * Order(24)
-  //exit(0);
+  p.mul(&p, &G, &pop); // p = c.G * Order(42)
+  q.mul(&q, &G, &qop); // q = c.G * Order(24)
   bprint("Gp", pop.prime_x.field.x);
   bprint("Gq", qop.prime_y.field.x);
   bprint("G", G.prime_x.field.x);
@@ -441,7 +415,6 @@ void Ftester(void) {
   bprint("P", p.prime_y.field.x);
   bprint("Q", q.prime_x.field.x);
   bprint("Q", q.prime_y.field.x);
-
 
   bint t1, t2, t3, t4, t5, t6;
   wrd2bint(&t1, 0x2a);
@@ -461,48 +434,24 @@ void Ftester(void) {
   bprint("P3", pt3.prime_x.field.x);
   bprint("P3", pt3.prime_y.field.x);
   exit(0);
-  //exit(0); ////  -----------------------------------
-  //exit(0);
-  //G.init(&po, &py, &G2);
-  //Point_mul(&p, &G, &pop); // p = c.G * Order(42)
-  //Point_mul(&q, &G, &qop); // q = c.G * Order(24)
-
-  //printuint32("PX", p.prime_x.x);
-  //printuint32("PY", p.prime_y.x);
-  //printuint32("GX", G.prime_x.x);
-  //printuint32("GY", G.prime_y.x);
-
-  //printuint32("PTXXX", p.prime_x.field.x);
-  //printuint32("PTXXX", p.prime_y.field.x);
-  //printuint32("PTXXX", q.prime_x.field.x);
-  //printuint32("PTXXX", q.prime_y.field.x);
   //r = Point(p.x, -p.y)
-
   // assert p + q == c.G * Order(66)
   GR.add = Point_add;
   bprint("pp", p.prime_x.field.x);
   bprint("pp", p.prime_y.field.x);
   bprint("qq", q.prime_x.field.x);
   bprint("qq", q.prime_y.field.x);
-  //exit(0);
-  GR.add(&GR, &p, &q);
-  //exit(0);
-//  Point_add(&GR, &p, &q);///&pop, &qop); // p + q
+  GR.add(&GR, &p, &q); // p + q
   bprint("p+q", GR.prime_x.field.x);
   bprint("p+q", GR.prime_y.field.x);
-  //exit(0);
   order1.initint(66, p1, &order1);
-  //order1.initint(66, &order1);
   po.init(order1.field.x, &po);
   pop.init(&po, &pz, &pop);
   Point_mul(&G2, &G, &pop);// c.G * Order(66)
-  //printuint32("GRx", GR.prime_x.field.x);
-  //printuint32("G2x", G2.prime_x.field.x);
   bprint("GRx", GR.prime_x.field.x);
   bprint("G2x", G2.prime_x.field.x);
   bprint("order1", order1.field.x);
   bprint("po", po.field.x);
-
   bprint("p+q", GR.prime_x.field.x);
   bprint("p+q", GR.prime_y.field.x);
 }

@@ -24,12 +24,6 @@ int main(void) {
   printf("ccc %d %d\n", c.siz, a.siz);//, sizeof(uint32_t), CHAR_BIT, sizeof(uint32_t) * CHAR_BIT);
   bmul(&d, &c, &a);
   bprint("D", &d);
-  // 0xb9fcf4f502f06b563974c8fd64b52750b925ec4138d28632fc84b3f8eedf7c7d471a809102365772e1eefc491b090a624584b32a122142b07a6c3aefc791d81cf527e4053ea119ffa86f73189e82d3ae2650192831a8fc8618fac175b568ef0
-
-// D: 5b568ef0 618fac17 831a8fc8 e2650192 89e82d3a fa86f731 53ea119f cf527e40 fc791d81 7a6c3ae a122142b 24584b32 91b090a6 2e1eefc4 10236577 d471a809 8eedf7c7 2fc84b3f 138d2863 b925ec4
-// D: 5b568ef0 618fac17 831a8fc8 e2650192 89e82d3a fa86f731 53ea119f cf527e40 fc791d81 7a6c3ae a122142b 24584b32 91b090a6 2e1eefc4 10236577 d471a809 8eedf7c7 2fc84b3f 138d2863 b925ec4
-// D: 5b568ef0 618fac17 831a8fc8 e2650192 89e82d3a fa86f731 53ea119f cf527e40 100000 0 0 e538429b c4539ec5 7462be61 fa493fd0 c700db4f 19c51549 d9c6aad6 904bf1b9 775bdf
-
   for (int i = 0; i < 400; i++) {
     brshift(&r, &d, 2);
     bprint2("ds", &r);

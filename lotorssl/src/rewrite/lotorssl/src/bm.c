@@ -143,14 +143,12 @@ static inline int16_t uint32_addsigned(uint32_t *ret, int16_t ret_neg, const uin
 bint *badd(bint *ret, const bint *a, const bint *b) {
   printf("pi: add %d %d: neg: %d %d\n", a->siz, b->siz, a->neg, b->neg);
   uint32_addsigned(ret->wrd, ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, b->neg);
-//  ret->siz = LEN;
   return ret;
 }
 
 bint *bsub(bint *ret, const bint *a, const bint *b) {
   printf("pi: add sub %d %d: neg: %d %d\n", a->siz, b->siz, a->neg, b->neg);
   uint32_addsigned(ret->wrd, ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, !b->neg);
-  ret->siz = LEN;
   return ret;
 }
 
@@ -280,7 +278,7 @@ static inline int16_t uint32_mul_karatsuba(uint32_t *ret, const uint32_t *a, con
   return uint32_tru(ret, nz0+m2*2);
 }
 
-bint bmul(bint *ret, const bint *a, const bint *b) {
+bint *bmul(bint *ret, const bint *a, const bint *b) {
   int16_t an = a->siz, bn = b->siz, n = an+bn;
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
   if (ret->wrd != a->wrd && ret->wrd != b->wrd && an < LEN && bn < LEN) {
@@ -291,7 +289,7 @@ bint bmul(bint *ret, const bint *a, const bint *b) {
     memcpy(ret->wrd, tmp, ret->siz * sizeof(uint32_t));
   }
   ret->neg = a->neg ^ b->neg;
-  return *ret;
+  return ret;
 }
 
 
@@ -375,23 +373,16 @@ static inline bint bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) {
 bint *bdiv(bint *ret, const bint *a, const bint *d) {
   bint tmp = {.wrd={0}};
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
+  ret->siz = a->siz;
   bdivmod(ret, &tmp, a, d);
   return ret;
 }
 
-bint bmod(bint *ret, const bint *a, const bint *m) {
+bint *bmod(bint *ret, const bint *a, const bint *m) {
   bint tmp = {.wrd={0}};
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
-  memset(tmp.wrd, 0, LEN * sizeof(uint32_t));
-  ret->siz = a->siz;       //1;//8;//(a->siz + m->siz) / 2; //8
-  tmp.siz = a->siz;        //1;//8;//(a->siz + m->siz) / 2;//ret->siz;
+  ret->siz = a->siz;
   bdivmod(&tmp, ret, a, m);
-//  ret->siz = 1;//8;//(a->siz + m->siz); //8;
-//  tmp.siz = 1;//8;//(a->siz + m->siz) / 2;//ret->siz;
-  bprint("bmod", &tmp);
-  bprint("bmod", ret);
-//  memcpy(ret, &tmp, sizeof(bint));
-//  memcpy(ret->wrd, tmp.wrd, LEN * sizeof(uint32_t));
-  return *ret;
+  return ret;
 }
 
