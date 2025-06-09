@@ -200,12 +200,10 @@ bint *brshift(bint *ret, const bint *a, const uint32_t b) {
 
 // ----- Bit functions -----
 int16_t bbitlen(const bint *a) {
-  int last = a->siz - 1;
+  int16_t last = a->siz - 1, ret = 0;
   if (last < 0) return 0;
-  uint32_t aa = a->wrd[last];
-  int ret = 0;
   for (int i = 32 - 1; i >= 0; i--) {
-    if ((aa >> i) & 1) {ret = i + 1; break;}
+    if ((a->wrd[last] >> i) & 1) {ret = i + 1; break;}
   }
   return ret + (last * 32);
 }
@@ -256,6 +254,7 @@ static inline int16_t uint32_mul_add(uint32_t *ret, const uint32_t *a, const uin
   return uint32_tru(ret, an + bn);
 }
 
+// https://en.wikipedia.org/wiki/Karatsuba_algorithm
 static inline int16_t uint32_mul_karatsuba(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn, uint32_t *tmp) {
   if (an < LEN && bn < LEN) return uint32_mul_add(ret, a, b, an, bn);
   int16_t m = an > bn? an : bn, m2 = m / 2, m3 = m2 + 2, nlo1hi1, nlo2hi2, nz0, nz1, nz2;

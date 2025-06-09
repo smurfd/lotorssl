@@ -127,7 +127,6 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   str2bint(y->P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   bprint("XP", x->P);
   bprint("YP", y->P);
-
   bint y2[1], x2[1], x3[1], x37[1], b[1], x3m[1];
   memset(b->wrd, 0, LEN * sizeof(uint32_t));
   memset(y2->wrd, 0, LEN * sizeof(uint32_t));
@@ -144,19 +143,35 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   printf("bmod pi: ------------v\n");
   bprint("pi: x3", x2);
   bmul(x3, x2, x->field.x); // x
-  x3m->siz = 24;
+  //x3m->siz = 24;
   printf("bmod point x\n");
   bprint("pi: x3", x3);
   bprint("pi: xp", x->P);
-  bmod(x3m, x3, x->P);
-  printf("bmod pi: ------------M\n");
+//  exit(0);
   x3m->siz = 24;
+  //bmod(x3, x3, x->P);
+//  exit(0);
+  printf("bmod pi: ------------M\n");
+//  x3m->siz = 24;
   printf("bmod point y\n");
   bprint("pi: xxx", x->P);
-  bprint("pi: x3m", x3m);
+  bprint("pi: x3m", x3);
+  bprint("pi: b", b);
   x3->neg = 0;
   badd(x37, x3, b);
   bprint("pi: x37", x37);
+  bmod(x37, x37, p1);
+  bprint("pi: x37", x37);
+  exit(0);
+  bint y22[1], x377[1];
+  y22->siz = y2->siz;
+  x377->siz = y2->siz;
+  y22->neg = 0;
+  x377->neg = 0;
+  y22->cap = y2->cap;
+  x377->cap = x37->cap;
+  bmod(y22, y2, p1);
+  bmod(x377, x37, p1);
   // y ** 2 == x ** 3 + A * x + B // A=0, B=7
   printf("p1\n");
   self->prime_x.init = Prime_init;
@@ -165,6 +180,9 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   self->prime_y.init(y->field.x, &self->prime_y);
   bprint("bpinit", self->prime_x.field.x);
   bprint("bpinit", self->prime_y.field.x);
+  bprint("Y2", y22);
+  bprint("XX", x377);
+  exit(0);
 }
 
 void Point_add(Point *ret, Point *data, Point *self) {
@@ -388,8 +406,10 @@ void Ftester(void) {
   qop.init = Point_init;
   infinity.init = Point_init;
   G.init(&px, &py, &G);
+  exit(0);
   printf("p----\n");
   printf("pp---\n");
+  exit(0);
   G2.init(&po, &py, &G2);
   bprint("Gpo", po.field.x);
   bprint("Gqo", qo.field.x);
@@ -443,7 +463,6 @@ void Ftester(void) {
   pt3.mul(&pt3, &pt1, &pt2);
   bprint("P3", pt3.prime_x.field.x);
   bprint("P3", pt3.prime_y.field.x);
-  //exit(0);
   //r = Point(p.x, -p.y)
   // assert p + q == c.G * Order(66)
   GR.add = Point_add;
