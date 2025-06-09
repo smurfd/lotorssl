@@ -36,9 +36,10 @@ void Field_add(Field *ret, Field *data, Field *self) {
   badd(&tmp, self->x, data->x);
   bprint("Fadd sx", self->x);
   bprint("Fadd dx", data->x);
-  bprint("Fadd =", &tmp); 
+  bprint("Fadd sp", self->p);
+  bprint("Fadd =", &tmp);
   bmod(ret->x, &tmp, self->p); // (self.x + data.x) % self.p
-  bprint("Fadd =", ret->x); 
+  bprint("Fadd =", ret->x);
 }
 
 void Field_sub(Field *ret, Field *data, Field *self) {
@@ -100,7 +101,7 @@ void Prime_init(bint *x, Prime *self) {
   self->field.initint(0, p1, &self->field);
   memcpy(self->field.x, x, sizeof(bint));
   str2bint(self->P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-} 
+}
 
 void Prime_initint(uint32_t x, bint *p1, Prime *self) {
   bint x1[1];
@@ -363,7 +364,7 @@ void Ftester(void) {
   order1.initint(42, p1, &order1);
   order2.initint(24, p1, &order2);
   bint x[1], y[1];
-  Prime px, py, prime_retp, prime_retq, pz, po, qo;
+  Prime px, py, pz, po, qo;
   px.init = Prime_init;
   py.init = Prime_init;
   pz.initint = Prime_initint;
@@ -416,24 +417,33 @@ void Ftester(void) {
   bprint("Q", q.prime_x.field.x);
   bprint("Q", q.prime_y.field.x);
 
-  bint t1, t2, t3, t4, t5, t6;
+  bint t1, t2, t3, t4;
   wrd2bint(&t1, 0x2a);
   wrd2bint(&t2, 0x18);
   str2bint(&t3, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&t4, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
 
+  Prime t1p, t2p, t3p, t4p;
+  t1p.init = Prime_init;
+  t2p.init = Prime_init;
+  t3p.init = Prime_init;
+  t4p.init = Prime_init;
+  t1p.init(&t1, &t1p);
+  t2p.init(&t2, &t2p);
+  t3p.init(&t3, &t3p);
+  t4p.init(&t4, &t4p);
   Point pt1, pt2, pt3;
   pt1.init = Point_init;
   pt2.init = Point_init;
-  pt1.init(&t1, &t2, &pt1);
-  pt2.init(&t3, &t4, &pt2);
+  pt1.init(&t1p, &t2p, &pt1);
+  pt2.init(&t3p, &t4p, &pt2);
   pt3.init = Point_init;
   pt3.init(&pz, &pz, &pt3);
   pt3.mul = Point_mul;
   pt3.mul(&pt3, &pt1, &pt2);
   bprint("P3", pt3.prime_x.field.x);
   bprint("P3", pt3.prime_y.field.x);
-  exit(0);
+  //exit(0);
   //r = Point(p.x, -p.y)
   // assert p + q == c.G * Order(66)
   GR.add = Point_add;
@@ -457,15 +467,47 @@ void Ftester(void) {
 }
 
 void Ftester_sanity(void) {
-  bint aaa, bbb, ccc, r1, ddd, eee, hhh;
+  bint aaa, bbb, ccc, r1, r2, ddd, hhh, jjj;
   wrd2bint(&aaa, 666);
   wrd2bint(&bbb, 999);
   wrd2bint(&r1, 333);
   bmod(&ccc, &bbb, &aaa);
   assert(cmp(&ccc, &r1) == 0);
   str2bint(&ddd, "0x6666666666666666666666666666666666666666666666666666666666666666");
-  str2bint(&eee, "0x3333333333333333333333333333333333333333333333333333333333333333");
-  bmod(&hhh, &ddd, &eee);
-  assert(cmp(&hhh, &eee) == 0);
+  str2bint(&jjj, "0x9999999999999999999999999999999999999999999999999999999999999999");
+  str2bint(&r2, "0x3333333333333333333333333333333333333333333333333333333333333333");
+  bmod(&hhh, &jjj, &ddd);
+  assert(cmp(&hhh, &r2) == 0);
+}
+
+void Ftester_math_sanity(void) {
+  bint a, b, p, r1, r2;
+  str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
+  str2bint(&b, "0xd7dab791a8647ac88695e20e29960a6fd41707258cc88cc0480ea7e5bb3f132f");
+  Field f1, f2, f3, f4, fr;
+  fr.initint = Field_initint;
+  f1.init = Field_init;
+  f2.init = Field_init;
+  f3.init = Field_init;
+  f4.init = Field_init;
+
+  str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  fr.initint(0, &p, &fr);
+  f1.init(&a, &f1);
+  f2.init(&b, &f2);
+  f2.add = Field_add;
+  f2.add(&fr, &f1, &f2);
+  bprint("FR", fr.x);
+  str2bint(&r1, "0x13431155011fea6b91d4f40d95bf20bd963231e0818a8f3ef0f51805551c727c");
+  bprint("R1", &r1);
+  fr.x->siz = 8;
+  bprint("FR", fr.x);
+  bprint("R1", &r1);
+  assert(cmp((bint*)fr.x, &r1) == 0);
+
+  f2.mul = Field_mul;
+  f2.mul(&f3, &f1, &f2);
+  str2bint(&r2, "0xa0cc141790812f1cc95dd3da756f3d4930f1adbeef8929265e0a74480f6eb392");
+  assert(cmp((bint*)f3.x, &r2) == 0);
 }
 
