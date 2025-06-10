@@ -209,10 +209,11 @@ int16_t bbitlen(const bint *a) {
 }
 
 bint *bsetbit(bint *a, const uint32_t i) {
+  printf("BIT %d\n", i);
   int16_t wi = i / 32, n = wi + 1;
-  memset(a->wrd, 0, a->siz * n);
+  memset(a->wrd, 0, LEN);//a->siz * n);
   a->siz = a->siz > n ? a->siz: n;
-  a->wrd[wi] |= ((uint32_t)1) << i % 32;
+  a->wrd[wi] |= (((uint32_t)1) << (i % 32));
   return a;
 }
 
@@ -313,59 +314,55 @@ static inline bint *bdivmod_hw(bint *ret, uint32_t *rem, uint32_t a) {
 }
 
 static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) {
-  bint quot, den, rema;
-  memcpy(rema.wrd, rem->wrd, rem->siz * sizeof(uint32_t));
-  rema.siz = rem->siz;
-  rema.neg = rem->neg;
+  bint *quot = ret, den, *rema = rem;
+  rema->siz = rem->siz;
+  quot->siz = ret->siz;
+  rema->neg = rem->neg;
+  quot->neg = ret->neg;
   if (d->siz == 0) {
     printf("RUHRO\n"); return NULL; // this should never happen
   } else if (a->siz == 1 && d->siz == 1) {
     printf("d1\n");
     uint32_t aw = a->wrd[0], bw = d->wrd[0];
-    wrd2bint(&quot, aw / bw);
-    wrd2bint(&rema, aw % bw);
+    wrd2bint(quot, aw / bw);
+    wrd2bint(rema, aw % bw);
     ret->neg = a->neg;
     rem->neg = a->neg ^ d->neg;
-    memcpy(rem->wrd, rema.wrd, rem->siz * sizeof(uint32_t));
-    memcpy(ret->wrd, quot.wrd, ret->siz * sizeof(uint32_t));
+    memcpy(rem->wrd, rema->wrd, rem->siz * sizeof(uint32_t));
+    memcpy(ret->wrd, quot->wrd, ret->siz * sizeof(uint32_t));
     return ret;
   } else if (d->siz == 1 && d->wrd[0] <= (UINT32_MAX) / 2) {
     uint32_t rm;
-    printf("d2\n");
-    memcpy(quot.wrd, a->wrd, a->siz * sizeof(uint32_t));
-    bdivmod_hw(&quot, &rm, d->wrd[0]);
-    wrd2bint(&rema, rm);
+    memcpy(quot->wrd, a->wrd, a->siz * sizeof(uint32_t));
+    bdivmod_hw(quot, &rm, d->wrd[0]);
+    wrd2bint(rema, rm);
     ret->neg = a->neg;
     rem->neg = a->neg ^ d->neg;
-    memcpy(rem->wrd, rema.wrd, rem->siz * sizeof(uint32_t));
-    memcpy(ret->wrd, quot.wrd, ret->siz * sizeof(uint32_t));
+    memcpy(rem->wrd, rema->wrd, rem->siz * sizeof(uint32_t));
+    memcpy(ret->wrd, quot->wrd, ret->siz * sizeof(uint32_t));
     return ret;
   }
-  printf("d3\n");
-  memcpy(rema.wrd, a->wrd, a->siz * sizeof(uint32_t));
-  rema.neg = 0;
-  quot.siz = 0;
-  ret->siz = 8;
-  rem->siz = 8;
-  if (uint32_abs(rema.wrd, d->wrd, rema.siz, d->siz) >= 0) {
-    printf("d4\n");
-    uint32_t sh = bbitlen(&rema) - bbitlen(d);
+  memset(rema->wrd, 0, LEN * sizeof(uint32_t));
+  memset(quot->wrd, 0, LEN * sizeof(uint32_t));
+  memcpy(rema->wrd, a->wrd, a->siz * sizeof(uint32_t));
+  rema->neg = 0;
+  quot->siz = 0;
+  if (uint32_abs(rema->wrd, d->wrd, rema->siz, d->siz) >= 0) {
+    int32_t sh = bbitlen(rema) - bbitlen(d);
     blshift(&den, (bint*)d, sh);
     den.neg = 0;
     for (int32_t s = sh; s >= 0; s--) {
-      if (uint32_abs(rema.wrd, den.wrd, rema.siz, den.siz) >= 0) {
-        bsub(&rema, &rema, &den);
-        bsetbit(&quot, s);
+      if (uint32_abs(rema->wrd, den.wrd, rema->siz, den.siz) >= 0) {
+        bsub(rema, rema, &den);
+        bsetbit(quot, s);
       }
       brshift(&den, &den, 1);
     }
   }
   ret->neg = a->neg;
   rem->neg = a->neg ^ d->neg;
-  memcpy(rem->wrd, rema.wrd, rema.siz * sizeof(uint32_t));
-  memcpy(ret->wrd, quot.wrd, quot.siz * sizeof(uint32_t));
-  rem->siz = rema.siz;
-  ret->siz = quot.siz;
+  rem->siz = rema->siz;
+  ret->siz = quot->siz;
   return ret;
 }
 
@@ -382,6 +379,10 @@ bint *bmod(bint *ret, const bint *a, const bint *m) {
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
   ret->siz = a->siz;
   bdivmod(&tmp, ret, a, m);
+  bprint("bmod tmp", &tmp);
+  bprint("bmod ret", ret);
+  bprint("bmod a", a);
+  bprint("bmod m", m);
   return ret;
 }
 

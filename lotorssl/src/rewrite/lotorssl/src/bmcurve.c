@@ -148,7 +148,7 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   bprint("pi: x3", x3);
   bprint("pi: xp", x->P);
 //  exit(0);
-  x3m->siz = 24;
+  //x3m->siz = 24;
   //bmod(x3, x3, x->P);
 //  exit(0);
   printf("bmod pi: ------------M\n");
@@ -158,21 +158,40 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   bprint("pi: x3m", x3);
   bprint("pi: b", b);
   x3->neg = 0;
+  x37->siz = x3->siz;
   badd(x37, x3, b);
   bprint("pi: x37", x37);
-  bmod(x37, x37, p1);
+  //exit(0);
+//  bmod(x37, x37, p1);
+  bprint("pi: 37m", x37);
+//  exit(0);
+
   bprint("pi: x37", x37);
-  exit(0);
+  //exit(0);
   bint y22[1], x377[1];
   y22->siz = y2->siz;
-  x377->siz = y2->siz;
+//  x377->siz = x37->siz;
   y22->neg = 0;
-  x377->neg = 0;
+//  x377->neg = 0;
   y22->cap = y2->cap;
-  x377->cap = x37->cap;
+//  x377->cap = x37->cap;
+ // x37->siz = 8;
+
   bmod(y22, y2, p1);
-  bmod(x377, x37, p1);
+  //bprint("X37x", x37);
+  //bprint("X37p", p1);
+  bint xx[1];
+  bmod(xx, x37, p1);
+  //bprint("Y22", y22);
+  //bprint("X37", xx);
+  assert(cmp(xx, y22) == 0);
+  //exit(0);
   // y ** 2 == x ** 3 + A * x + B // A=0, B=7
+
+//POINT y Prime(0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8) Prime(0x4866d6a5ab41ab2c6bcc57ccd3735da5f16f80a548e5e20a44e4e9b8118c26f2)
+//POINT x Prime(0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798) Prime(0x4866d6a5ab41ab2c6bcc57ccd3735da5f16f80a548e5e20a44e4e9b8118c26eb)
+//POINT x+B Prime(0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798) Prime(0x4866d6a5ab41ab2c6bcc57ccd3735da5f16f80a548e5e20a44e4e9b8118c26f2)
+
   printf("p1\n");
   self->prime_x.init = Prime_init;
   self->prime_y.init = Prime_init;
@@ -181,8 +200,7 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   bprint("bpinit", self->prime_x.field.x);
   bprint("bpinit", self->prime_y.field.x);
   bprint("Y2", y22);
-  bprint("XX", x377);
-  exit(0);
+  //exit(0);
 }
 
 void Point_add(Point *ret, Point *data, Point *self) {
@@ -374,7 +392,6 @@ void Ftester(void) {
   field0.mul(&field0, &field1, &field2);
   printf("eq: %d\n", field0.eq(&field0, &field3)); //assert Field(8) * Field(9) == Field(3)
   assert(field0.eq(&field0, &field3) == 0);
-  exit(0); // TODO: Break here for now
 
   Order order1, order2;
   order1.initint = Order_initint;
@@ -395,7 +412,6 @@ void Ftester(void) {
   pz.initint(0, p1, &pz);
   po.init(order1.field.x, &po);
   qo.init(order2.field.x, &qo);
-
   Point G, G2, GR, p, q, pop, qop, infinity;
   G.init = Point_init;
   G2.init = Point_init;
@@ -406,10 +422,7 @@ void Ftester(void) {
   qop.init = Point_init;
   infinity.init = Point_init;
   G.init(&px, &py, &G);
-  exit(0);
-  printf("p----\n");
-  printf("pp---\n");
-  exit(0);
+  exit(0); // TODO: Break here for now
   G2.init(&po, &py, &G2);
   bprint("Gpo", po.field.x);
   bprint("Gqo", qo.field.x);
@@ -436,7 +449,6 @@ void Ftester(void) {
   bprint("P", p.prime_y.field.x);
   bprint("Q", q.prime_x.field.x);
   bprint("Q", q.prime_y.field.x);
-
   bint t1, t2, t3, t4;
   wrd2bint(&t1, 0x2a);
   wrd2bint(&t2, 0x18);
