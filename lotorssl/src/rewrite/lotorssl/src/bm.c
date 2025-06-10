@@ -74,7 +74,7 @@ bint *wrd2bint(bint *x, const uint32_t w) {
 
 // ----- Math Add & Sub functions -----
 static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn) {
-  uint32_t carry = 0, n = an < bn ? an : bn, i, sum, sum2;
+  uint32_t carry = 0, n = an < bn ? an : bn, sum, sum2, i;
   printf("pi: add32 %d %d %d\n", n, an, bn);
   for (i = 0; i < n; i++) {
     sum = (carry + a[i]); // add and get carry
@@ -83,11 +83,11 @@ static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_
     carry += (sum2 < b[i]);
     ret[i] = sum2;
   }
-  for (; i < an; i++) {
+  for (i = n; i < an; i++) {
     ret[i] = (a[i] + carry); // add and get carry
     carry = (ret[i] < carry);
   }
-  for (; i < bn; i++) {
+  for (i = an; i < bn; i++) {
     ret[i] = (b[i] + carry); // add and get carry
     carry = (ret[i] < carry);
   }
@@ -96,19 +96,19 @@ static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_
 }
 
 static inline int16_t uint32_sub(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn) {
-  uint32_t carry = 0, n = an < bn ? an : bn, i, dif = 0, dif2;
-  for (i = 0; i < bn; i++) {
+  uint32_t carry = 0, dif = 0, dif2 = 0, n = an > bn ? bn : an; //, n = an < bn ? an : bn, i
+  for (uint32_t i = 0; i < bn; i++) {
     dif = a[i] - carry; // sub and get carry
     carry = dif > a[i];
     dif2 = dif - b[i]; // sub and get carry
     carry += (dif2 > dif);
     ret[i] = dif2;
   }
-  for (; i < an; i++) {
+  for (uint32_t i = bn; i < an; i++) {
     ret[i] = a[i] - carry; // sub and get carry
     carry = ret[i] > a[i];
   }
-  return uint32_tru(ret, i);
+  return uint32_tru(ret, n);
 }
 
 static inline int16_t uint32_addsigned(uint32_t *ret, int16_t ret_neg, const uint32_t *a, const int16_t an, const int16_t a_neg,
@@ -381,8 +381,8 @@ bint *bmod(bint *ret, const bint *a, const bint *m) {
   bdivmod(&tmp, ret, a, m);
   bprint("bmod tmp", &tmp);
   bprint("bmod ret", ret);
-  bprint("bmod a", a);
-  bprint("bmod m", m);
+  bprint("bmod a", (bint*)a);
+  bprint("bmod m", (bint*)m);
   return ret;
 }
 

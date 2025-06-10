@@ -6,6 +6,8 @@
 #include <assert.h>
 #include "bmcurve.h"
 
+// TODO: rewrite this fuckin garbage!!!!
+
 // ----- Field class -----
 void Field_init(bint *x, Field *self) {
   str2bint(self->p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -114,9 +116,9 @@ void Prime_initint(uint32_t x, bint *p1, Prime *self) {
 
 
 // ----- Point class -----
-void Point_init(Prime *x, Prime *y, Point *self) {
-  bint p1[1];
-  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+void Point_init(Prime *x, Prime *y, bint *p1, Point *self) {
+//  bint p1[1];
+//  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   self->prime_x.initint = Prime_initint;
   self->prime_y.initint = Prime_initint;
   self->prime_x.initint(0, p1, &self->prime_x);
@@ -168,7 +170,7 @@ void Point_init(Prime *x, Prime *y, Point *self) {
 
   bprint("pi: x37", x37);
   //exit(0);
-  bint y22[1], x377[1];
+  bint y22[1];
   y22->siz = y2->siz;
 //  x377->siz = x37->siz;
   y22->neg = 0;
@@ -182,8 +184,9 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   //bprint("X37p", p1);
   bint xx[1];
   bmod(xx, x37, p1);
-  //bprint("Y22", y22);
-  //bprint("X37", xx);
+  bprint("Y22", y22);
+  bprint("x37", x37);
+  bprint("X37", xx);
   assert(cmp(xx, y22) == 0);
   //exit(0);
   // y ** 2 == x ** 3 + A * x + B // A=0, B=7
@@ -203,10 +206,10 @@ void Point_init(Prime *x, Prime *y, Point *self) {
   //exit(0);
 }
 
-void Point_add(Point *ret, Point *data, Point *self) {
+void Point_add(Point *ret, Point *data, bint *p1, Point *self) {
   printf("add here\n");
-  bint p1[1];
-  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+//  bint p1[1];
+//  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
 
   Prime x1, x2, y1, y2, p0;
   x1.init = Prime_init;
@@ -266,7 +269,7 @@ void Point_add(Point *ret, Point *data, Point *self) {
     Point r;
     r.init = Point_init;
     printf("p1 init\n");
-    r.init(&x3, &y3, &r);
+    r.init(&x3, &y3, p1, &r);
     printf("p1 init\n");
     memcpy(ret, &r, sizeof(Point));
     printf("pa end2\n");
@@ -275,7 +278,7 @@ void Point_add(Point *ret, Point *data, Point *self) {
   if (Field_eq(&x1.field, &x2.field) == 0 && Field_eq(&y1.field, &y2.field) == 0) { // y2 neg?
     Point pz;
     pz.init = Point_init;
-    pz.init(&p0, &p0, &pz);
+    pz.init(&p0, &p0, p1, &pz);
     memcpy(ret, &pz, sizeof(Point));
     printf("MULinf\n");
     return;
@@ -311,17 +314,17 @@ void Point_add(Point *ret, Point *data, Point *self) {
   Point r;
   r.init = Point_init;
   printf("p2 init\n");
-  r.init(&x3, &y3, &r);
+  r.init(&x3, &y3, p1, &r);
   printf("p2 init\n");
   memcpy(ret, &r, sizeof(Point));
   printf("pa end3\n");
   return; // return Point(x3, y3)
 }
 
-void Point_mul(Point *ret, Point *self, Point *k) { // TODO: this actually work?!
+void Point_mul(Point *ret, Point *self, Point *k, bint *p1) { // TODO: this actually work?!
   bint n[1], z[1], o[1], tw[1], b[1];
-  bint p1[1];
-  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+//  bint p1[1];
+//  str2bint(p1, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   Prime pz; // Point multiplication: Double-and-add https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
   Point result, addend, a;
   printf("mult\n");
@@ -336,8 +339,8 @@ void Point_mul(Point *ret, Point *self, Point *k) { // TODO: this actually work?
   addend.init = Point_init;
   a.init = Point_init;
   printf("mult\n");
-  result.init(&pz, &pz, &result);
-  addend.init(&self->prime_x, &self->prime_y, &addend);
+  result.init(&pz, &pz, p1, &result);
+  addend.init(&self->prime_x, &self->prime_y, p1, &addend);
   memset(n->wrd, 0, LEN * sizeof(uint32_t));
   memcpy(n->wrd, k->prime_x.field.x->wrd, k->prime_x.field.x->siz * sizeof(uint32_t));
   while (cmp(n, z) == 1 && n->siz > 0) {
@@ -348,10 +351,10 @@ void Point_mul(Point *ret, Point *self, Point *k) { // TODO: this actually work?
     bprint("GBbb", b);
     printf("aft mod\n");
     printf("GNcmp %d\n", cmp(b, o));
-    if (cmp(b, o) == 0) {Point_add(&result, &result, &addend); printf("Gnnn ODD\n");}
-    a.init(&pz, &pz, &a);
+    if (cmp(b, o) == 0) {Point_add(&result, &result, p1, &addend); printf("Gnnn ODD\n");}
+    a.init(&pz, &pz, p1, &a);
     printf("add here -----------------------------------------\n");
-    Point_add(&a, &addend, &addend);
+    Point_add(&a, &addend, p1, &addend);
     printf("add here -----------------------------------------\n");
     printf("nnn b111 %d\n", cmp(b, o));
     brshift(n, n, 1);
@@ -367,8 +370,9 @@ void Point_mul(Point *ret, Point *self, Point *k) { // TODO: this actually work?
 
 void Ftester(void) {
   Field field0, field1, field2, field3;
-  bint p1[1];
+  bint p1[1], p2[1];
   wrd2bint(p1, 23);
+  wrd2bint(p2, 0);
   printf("--------- Testvalues -------------------------------------------\n");
   field0.initint = Field_initint;
   field1.initint = Field_initint;
@@ -396,8 +400,8 @@ void Ftester(void) {
   Order order1, order2;
   order1.initint = Order_initint;
   order2.initint = Order_initint;
-  order1.initint(42, p1, &order1);
-  order2.initint(24, p1, &order2);
+  order1.initint(42, p2, &order1);
+  order2.initint(24, p2, &order2);
   bint x[1], y[1];
   Prime px, py, pz, po, qo;
   px.init = Prime_init;
@@ -421,26 +425,29 @@ void Ftester(void) {
   pop.init = Point_init;
   qop.init = Point_init;
   infinity.init = Point_init;
-  G.init(&px, &py, &G);
+  G.init(&px, &py, p1, &G);
+  bprint("PO", &po.field.x);
+  bprint("QO", &qo.field.x);
   exit(0); // TODO: Break here for now
-  G2.init(&po, &py, &G2);
+  G2.init(&po, &qo, p2, &G2);//py, &G2);
+  exit(0);
   bprint("Gpo", po.field.x);
   bprint("Gqo", qo.field.x);
   bprint("GX", G.prime_x.field.x);
   bprint("GY", G.prime_y.field.x);
   printf("p----\n");
-  GR.init(&pz, &pz, &GR);
-  p.init(&pz, &pz, &p);
-  q.init(&pz, &pz, &q);
-  infinity.init(&pz, &pz, &infinity);
-  pop.init(&po, &po, &pop);//&pz, &pop);
-  qop.init(&qo, &qo, &qop);//&pz, &qop);
+  GR.init(&pz, &pz, p2, &GR);
+  p.init(&pz, &pz, p2, &p);
+  q.init(&pz, &pz, p2, &q);
+  infinity.init(&pz, &pz, p2, &infinity);
+  pop.init(&po, &po, p2, &pop);//&pz, &pop);
+  qop.init(&qo, &qo, p2, &qop);//&pz, &qop);
   bprint("GpopX", pop.prime_x.field.x);
   bprint("GqopY", qop.prime_y.field.x);
   p.mul = Point_mul;
   q.mul = Point_mul;
-  p.mul(&p, &G, &pop); // p = c.G * Order(42)
-  q.mul(&q, &G, &qop); // q = c.G * Order(24)
+  p.mul(&p, &G, &pop, p2); // p = c.G * Order(42)
+  q.mul(&q, &G, &qop, p2); // q = c.G * Order(24)
   bprint("Gp", pop.prime_x.field.x);
   bprint("Gq", qop.prime_y.field.x);
   bprint("G", G.prime_x.field.x);
@@ -467,12 +474,12 @@ void Ftester(void) {
   Point pt1, pt2, pt3;
   pt1.init = Point_init;
   pt2.init = Point_init;
-  pt1.init(&t1p, &t2p, &pt1);
-  pt2.init(&t3p, &t4p, &pt2);
+  pt1.init(&t1p, &t2p, p1, &pt1);
+  pt2.init(&t3p, &t4p, p1, &pt2);
   pt3.init = Point_init;
-  pt3.init(&pz, &pz, &pt3);
+  pt3.init(&pz, &pz, p1, &pt3);
   pt3.mul = Point_mul;
-  pt3.mul(&pt3, &pt1, &pt2);
+  pt3.mul(&pt3, &pt1, &pt2, p1);
   bprint("P3", pt3.prime_x.field.x);
   bprint("P3", pt3.prime_y.field.x);
   //r = Point(p.x, -p.y)
@@ -482,13 +489,13 @@ void Ftester(void) {
   bprint("pp", p.prime_y.field.x);
   bprint("qq", q.prime_x.field.x);
   bprint("qq", q.prime_y.field.x);
-  GR.add(&GR, &p, &q); // p + q
+  GR.add(&GR, &p, p1, &q); // p + q
   bprint("p+q", GR.prime_x.field.x);
   bprint("p+q", GR.prime_y.field.x);
   order1.initint(66, p1, &order1);
   po.init(order1.field.x, &po);
-  pop.init(&po, &pz, &pop);
-  Point_mul(&G2, &G, &pop);// c.G * Order(66)
+  pop.init(&po, &pz, &pop, p1);
+  Point_mul(&G2, &G, &pop, p1);// c.G * Order(66)
   bprint("GRx", GR.prime_x.field.x);
   bprint("G2x", G2.prime_x.field.x);
   bprint("order1", order1.field.x);

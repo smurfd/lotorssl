@@ -39,11 +39,11 @@ struct Order {
 
 struct Point {
   Prime prime_x, prime_y;
-  void (*init)(Prime *x, Prime *y, Point *self);
+  void (*init)(Prime *x, Prime *y, bint *p1, Point *self);
   uint8_t (*eq)(Point*, Point*);
-  void (*add)(Point*, Point*, Point*);
+  void (*add)(Point*, Point*, bint *p1, Point*);
   uint8_t (*sub)(Point*, Point*, Point*);
-  void (*mul)(Point*, Point*, Point*);
+  void (*mul)(Point*, Point*, Point*, bint *p1);
 };
 
 struct Curve {
