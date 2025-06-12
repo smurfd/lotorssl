@@ -44,7 +44,7 @@ void prime_initint(prime *p, uint32_t x, bint *p1);
 void point_init(point *p, prime *a, prime *b, bint *p1);
 void point_add(point *ret, point *a, point *b, bint *p1);
 void point_sub(point *ret, point *a, point *b, bint *p1);
-void point_mul(point *ret, point *a, point *b, bint *p1);
+void point_mul(point *ret, point *a, field *k, bint *p1);
 int8_t point_eq(point *a, point *b);
 
 void curve_init(curve *c, char *a, char *b, char *n, char *p, char *g);

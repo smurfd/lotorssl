@@ -41,9 +41,6 @@ static inline int16_t uint32_abs(const uint32_t *a, const uint32_t *b, int16_t a
 }
 
 int16_t cmp(const bint *a, const bint *b) {
-  printf("GNs %d %d\n", a->siz, b->siz);
-  bprint("GNcmp1", (bint*)a);
-  bprint("GNcmp2", (bint*)b);
   if (a->siz != b->siz) {printf("GN s1\n"); return 1;}
   if (a->siz <= 0) {printf("GN s<\n"); return 1;}
   for (int16_t i = a->siz - 1; i >= 0; i--) {if (a->wrd[i] != b->wrd[i]) {printf("GN wrd\n");return 1;}}
@@ -209,7 +206,6 @@ int16_t bbitlen(const bint *a) {
 }
 
 bint *bsetbit(bint *a, const uint32_t i) {
-  printf("BIT %d\n", i);
   int16_t wi = i / 32, n = wi + 1;
   memset(a->wrd, 0, LEN);//a->siz * n);
   a->siz = a->siz > n ? a->siz: n;
@@ -328,26 +324,30 @@ static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) 
     wrd2bint(rema, aw % bw);
     ret->neg = a->neg;
     rem->neg = a->neg ^ d->neg;
-    memcpy(rem->wrd, rema->wrd, rem->siz * sizeof(uint32_t));
-    memcpy(ret->wrd, quot->wrd, ret->siz * sizeof(uint32_t));
+    memcpy(rem->wrd, rema->wrd, rema->siz * sizeof(uint32_t));
+    memcpy(ret->wrd, quot->wrd, quot->siz * sizeof(uint32_t));
     return ret;
   } else if (d->siz == 1 && d->wrd[0] <= (UINT32_MAX) / 2) {
     uint32_t rm;
+    printf("d2\n");
     memcpy(quot->wrd, a->wrd, a->siz * sizeof(uint32_t));
     bdivmod_hw(quot, &rm, d->wrd[0]);
     wrd2bint(rema, rm);
     ret->neg = a->neg;
     rem->neg = a->neg ^ d->neg;
-    memcpy(rem->wrd, rema->wrd, rem->siz * sizeof(uint32_t));
-    memcpy(ret->wrd, quot->wrd, ret->siz * sizeof(uint32_t));
+    memcpy(rem->wrd, rema->wrd, rema->siz * sizeof(uint32_t));
+    memcpy(ret->wrd, quot->wrd, quot->siz * sizeof(uint32_t));
     return ret;
   }
   memset(rema->wrd, 0, LEN * sizeof(uint32_t));
   memset(quot->wrd, 0, LEN * sizeof(uint32_t));
   memcpy(rema->wrd, a->wrd, a->siz * sizeof(uint32_t));
+  den.neg = 0;
   rema->neg = 0;
+  quot->neg = 0;
   quot->siz = 0;
   if (uint32_abs(rema->wrd, d->wrd, rema->siz, d->siz) >= 0) {
+    printf("d5\n");
     int32_t sh = bbitlen(rema) - bbitlen(d);
     blshift(&den, (bint*)d, sh);
     den.neg = 0;
@@ -359,10 +359,13 @@ static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) 
       brshift(&den, &den, 1);
     }
   }
+  printf("d4\n");
   ret->neg = a->neg;
   rem->neg = a->neg ^ d->neg;
   rem->siz = rema->siz;
   ret->siz = quot->siz;
+  memcpy(rem->wrd, rema->wrd, rema->siz * sizeof(uint32_t));
+  memcpy(ret->wrd, quot->wrd, quot->siz * sizeof(uint32_t));
   return ret;
 }
 
@@ -379,10 +382,8 @@ bint *bmod(bint *ret, const bint *a, const bint *m) {
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
   ret->siz = a->siz;
   bdivmod(&tmp, ret, a, m);
-  bprint("bmod tmp", &tmp);
-  bprint("bmod ret", ret);
-  bprint("bmod a", (bint*)a);
-  bprint("bmod m", (bint*)m);
   return ret;
 }
 
+//
+// Borrowed / stolen / rewritten from https://github.com/983/bigint/
