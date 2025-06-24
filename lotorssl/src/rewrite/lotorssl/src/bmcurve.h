@@ -29,7 +29,7 @@ typedef struct Curve {
 void field_init(field *f, bint *x, bint *p);
 void field_initint(field *f, uint32_t x, bint *p);
 void field_add(field *ret, field *a, field *b);
-void field_sub(field *ret, field *a, field *b);
+void field_sub(field *ret, const field *a, const field *b);
 void field_mul(field *ret, field *a, field *b);
 void field_div(field *ret, field *a, field *b);
 void field_neg(field *ret, field *a, field *b);
@@ -50,6 +50,7 @@ int8_t point_eq(point *a, point *b);
 void curve_init(curve *c, char *a, char *b, char *n, char *p, char *g);
 
 void Ftester(void);
+void Ftester2(void);
 void Ftester_sanity(void);
 void Ftester_math_sanity(void);
 #endif

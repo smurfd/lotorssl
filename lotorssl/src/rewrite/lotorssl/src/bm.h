@@ -13,8 +13,8 @@ bint *brshift(bint *ret, const bint *a, const uint32_t b);
 bint *badd(bint *ret, const bint *a, const bint *b);
 bint *bsub(bint *ret, const bint *a, const bint *b);
 bint *bmul(bint *ret, const bint *a, const bint *b);
-bint *bdiv(bint *ret, const bint *a, const bint *d);
-bint *bmod(bint *ret, const bint *a, const bint *m);
+bint *bdiv(bint *ret, bint *tmp, const bint *a, const bint *d);
+bint *bmod(bint *ret, bint *tmp, const bint *a, const bint *m);
 bint *bgcd(bint *ret, const bint *a, const bint *b);
 bint *str2bint(bint *x, const char *str);
 bint *wrd2bint(bint *x, const uint32_t w);
@@ -22,5 +22,6 @@ void bprint(char *s, bint *a);
 void bprint2(char *s, bint *a);
 int16_t cmp(const bint *a, const bint *b);
 int16_t bbitlen(const bint *a);
+bint *bcpy(bint *a, const bint *b, int n);
 #endif
 
