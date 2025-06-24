@@ -130,36 +130,34 @@ static inline int16_t uint32_sub(uint32_t *ret, const uint32_t *a, const uint32_
   return uint32_tru(ret, n);
 }
 
-static inline int16_t uint32_addsigned(uint32_t *ret, int16_t ret_neg, const uint32_t *a, const int16_t an, const int16_t a_neg,
+static inline int16_t uint32_addsigned(uint32_t *ret, int16_t *ret_neg, const uint32_t *a, const int16_t an, const int16_t a_neg,
   const uint32_t *b, const int16_t bn, const int16_t b_neg) {
-  printf("ZERO %d %d:%d %d\n", an, bn, a_neg, b_neg);
   if (a_neg) {
     if (b_neg) {
-      if (an >= bn) {ret_neg = 1; return uint32_add(ret, a, b, an, bn);}
-      else {ret_neg = 1; return uint32_add(ret, b, a, bn, an);}
+      if (an >= bn) {*ret_neg = 1; return uint32_add(ret, a, b, an, bn);}
+      else {*ret_neg = 1; return uint32_add(ret, b, a, bn, an);}
     } else {
-      if (uint32_abs(a, b, an, bn) >= 0) {ret_neg = 1; return uint32_sub(ret, a, b, an, bn);}
-      else {ret_neg = 0;  return uint32_sub(ret, b, a, bn, an);}
+      if (uint32_abs(a, b, an, bn) >= 0) {*ret_neg = 1; return uint32_sub(ret, a, b, an, bn);}
+      else {*ret_neg = 0;  return uint32_sub(ret, b, a, bn, an);}
     }
   } else {
     if (b_neg) {
-      if (uint32_abs(a, b, an, bn) >= 0) {ret_neg = 0; return uint32_sub(ret, a, b, an, bn);}
-      else {ret_neg = 1; return uint32_sub(ret, b, a, bn, an);}
+      if (uint32_abs(a, b, an, bn) >= 0) {*ret_neg = 0; return uint32_sub(ret, a, b, an, bn);}
+      else {*ret_neg = 1; return uint32_sub(ret, b, a, bn, an);}
     } else {
-      if (an >= bn) {ret_neg = 0; return uint32_add(ret, a, b, an, bn);}
-      else {ret_neg = 0; return uint32_add(ret, b, a, bn, an);}
+      if (an >= bn) {*ret_neg = 0; return uint32_add(ret, a, b, an, bn);}
+      else {*ret_neg = 0; return uint32_add(ret, b, a, bn, an);}
     }
   }
 }
 
 bint *badd(bint *ret, const bint *a, const bint *b) {
-  ret->siz = uint32_addsigned(ret->wrd, ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, b->neg);
+  ret->siz = uint32_addsigned(ret->wrd, &ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, b->neg);
   return ret;
 }
 
 bint *bsub(bint *ret, const bint *a, const bint *b) {
-  ret->siz = uint32_addsigned(ret->wrd, ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, !b->neg);
-  printf("RN %d\n", ret->neg);
+  ret->siz = uint32_addsigned(ret->wrd, &ret->neg, a->wrd, a->siz, a->neg, b->wrd, b->siz, !b->neg);
   return ret;
 }
 

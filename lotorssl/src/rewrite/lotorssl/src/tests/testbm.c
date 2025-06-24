@@ -37,80 +37,59 @@ void test_div(void) {
 }
 
 #define SWAP(a, b) {bint tmp = a; a = b; b = tmp;}
-void gc(void) {
-/*
-    r, old_r = p, k
-
-    while r != 0:
-        quotient = old_r // r
-        old_r, r = r, old_r - quotient * r
-*/
-  bint s = {.wrd = {0}, .siz=0}, os = {.wrd = {0}, .siz=0}, t = {.wrd = {0}, .siz=0}, ot = {.wrd = {0}, .siz=0}, r = {.wrd = {0}, .siz=0}, or = {.wrd = {0}, .siz=0}, quot = {.wrd = {0}, .siz=0};
-  bint P = {.wrd = {0}, .siz=0}, tmp = {.wrd = {0}, .siz=0}, qr = {.wrd = {0}, .siz=0, .cap = 0}, oqr = {.wrd = {0}, .siz=0, .cap = 0};
-  bint mqr = {.wrd = {0}, .siz=0, .cap = 0}, d = {.wrd = {0}, .siz = 0, .cap = 0}, rtmp = {.wrd = {0}, .siz = 0, .cap = 0}, zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint qs = {.wrd = {0}, .siz=0, .cap = 0}, qt = {.wrd = {0}, .siz = 0, .cap = 0}, oqs = {.wrd = {0}, .siz = 0, .cap = 0}, oqt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  wrd2bint(&s, 0);
+bint *gc(bint *ret, bint *k, const bint *p) {
+  bint zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  wrd2bint(ret, 0);
+  int16_t kz = cmp(k, &zero);
+  if (kz == 0) {
+    printf("Divide by zero, not good\n");
+    return NULL; // should never happen
+  } else if (kz < 0) {
+    k->neg = 1;
+    gc(ret, k, p);
+    bsub(ret, p, ret);
+    return ret; // p - inverse_mod(-k, p)
+  }
+  bint s = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, os = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint ot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, r = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, or = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint quot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, P = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint qr = {.wrd = {0}, .siz = 0, .cap = 0, .neg = 0}, oqr = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint rtmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint qs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, qt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint oqs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, oqt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint aa  = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, bb = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, cc = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   wrd2bint(&os, 1);
   wrd2bint(&t, 1);
-  wrd2bint(&ot, 0);
   str2bint(&P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&r, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&or, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
-  wrd2bint(&rtmp, 0);
-  wrd2bint(&quot, 0);
-  wrd2bint(&tmp, 0);
-  wrd2bint(&qr, 0);
-  wrd2bint(&mqr, 0);
-  wrd2bint(&oqr, 0);
-  wrd2bint(&tmp, 0);
-  wrd2bint(&zero, 0);
   while (cmp(&r, &zero) != 0 && r.siz != 0) {
     bdiv(&quot, &tmp, &or, &r); // q = or / r
-    printf("------------\n");
-    bprint("quot", &quot);
-    bprint("r   ", &r);
-    bprint("or  ", &or);
-    bprint("rtmp", &tmp);
     bmul(&qr, &quot, &r); // (q * r)
     bmul(&qs, &quot, &s); // (q * s)
     bmul(&qt, &quot, &t); // (q * t)
-    bprint("qr  ", &qr);
     bsub(&oqr, &or, &qr); // or = or - (q * r)
     bsub(&oqs, &os, &qs); // os = os - (q * s)
     bsub(&oqt, &ot, &qt); // ot = ot - (q * t)
-    bprint("oqr  ", &oqr);
     SWAP(r, or); // or = r
     SWAP(s, os); // os = s
     SWAP(t, ot); // ot = t
-    printf("\n");
     SWAP(r, oqr); // r = or
     SWAP(s, oqs); // s = os
     SWAP(t, oqt); // t = ot
-    printf("\n");
   }
-  bprint("G", &or);
-  assert(cmp(&or, wrd2bint(&tmp, 1)) == 0);
-  bint aa, bb, cc;
-  wrd2bint(&aa, 0);
-  wrd2bint(&bb, 0);
-  str2bint(&rtmp, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
-  bprint("OS", &os);
-  bprint("rtmp", &rtmp);
-  bmul(&aa, &os, &rtmp);
-  bprint("aa", &aa);
-  bmod(&cc, &bb, &aa, &P);
-  bprint("bb", &bb);
-  bprint("cc", &cc);
-  // g, x, y = old_r, old_s, old_t
-  //  assert g == Prime(1)
-  //  assert Prime(Field((k * x).x) % Field(x = self.p)) == Prime(1)
-  //  return Field(x.x) % Field(x = self.p)
-
+  assert(cmp(&or, wrd2bint(&tmp, 1)) == 0); // assert g == 1 // g = or
+  bmul(&aa, &os, k); // x = os, (x * k)
+  bmod(&cc, &bb, &aa, &P); // (x * k) % P
+  if (cc.neg) badd(&cc, p, &cc); // TODO: hack?!
+  assert(cmp(&cc, wrd2bint(&rtmp, 1)) == 0); // assert (k * x) % p == 1
+  bmod(ret, &tmp, &os, p);
+  return ret; // return x % p // TODO: WORKS NOW! use in point_add
 }
 
 void tester_2ways(void) {
-  bint a = {.wrd = {0}, .siz=0, .cap = 0}, b = {.wrd = {0}, .siz=0, .cap = 0}, c = {.wrd = {0}, .siz=0, .cap = 0}, d = {.wrd = {0}, .siz = 0, .cap = 0};
-  bint e = {.wrd = {0}, .siz=0, .cap = 0}, t = {.wrd = {0}, .siz=0, .cap = 0};
+  bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, c = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint d = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, e = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   wrd2bint(&b, 0x33333333);
   wrd2bint(&c, 0x3);
@@ -150,18 +129,19 @@ void tester_2ways(void) {
 }
 
 int main(void) {
-
+  bint k = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, gcd = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   test_div();
   Btester_sanity();
   Ftester_sanity();
   Ftester_math_sanity();
-
   Ftester();
   Ftester2();
   tester_2ways();
 
-  gc();
-
+  // GCD
+  str2bint(&k, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
+  str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  gc(&gcd, &k, &p);
   printf("ok\n");
 }
 
