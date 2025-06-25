@@ -7,15 +7,9 @@
 
 // ----- Print functions -----
 void bprint(char *s, bint *a) {
-  if (a->neg) {
-  printf("%s: -%08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x: %d\n",
+  printf("%s: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x: %d : neg? %d\n",
     s, a->wrd[19], a->wrd[18], a->wrd[17], a->wrd[16], a->wrd[15], a->wrd[14], a->wrd[13], a->wrd[12], a->wrd[11], a->wrd[10], a->wrd[9], a->wrd[8],
-    a->wrd[7], a->wrd[6], a->wrd[5], a->wrd[4], a->wrd[3], a->wrd[2], a->wrd[1], a->wrd[0], a->siz);
-  } else {
-  printf("%s: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x: %d\n",
-    s, a->wrd[19], a->wrd[18], a->wrd[17], a->wrd[16], a->wrd[15], a->wrd[14], a->wrd[13], a->wrd[12], a->wrd[11], a->wrd[10], a->wrd[9], a->wrd[8],
-    a->wrd[7], a->wrd[6], a->wrd[5], a->wrd[4], a->wrd[3], a->wrd[2], a->wrd[1], a->wrd[0], a->siz);
-  }
+    a->wrd[7], a->wrd[6], a->wrd[5], a->wrd[4], a->wrd[3], a->wrd[2], a->wrd[1], a->wrd[0], a->siz, a->neg);
 }
 
 void bprint2(char *s, bint *a) {
@@ -334,13 +328,13 @@ static inline bint *bdivmod_hw(bint *ret, uint32_t *rem, uint32_t a) {
 }
 
 static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) {
-  bint *quot = ret, den, *rema = rem;
+  bint *quot = ret, *rema = rem, den = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   rema->siz = rem->siz;
   quot->siz = ret->siz;
   rema->neg = rem->neg;
   quot->neg = ret->neg;
   if (d->siz == 0) {
-    printf("RUHRO\n"); return NULL; // this should never happen
+    printf("Division by zero, not good\n"); return NULL; // this should never happen
   } else if (a->siz == 1 && d->siz == 1) {
     uint32_t aw = a->wrd[0], bw = d->wrd[0];
     wrd2bint(quot, aw / bw);
