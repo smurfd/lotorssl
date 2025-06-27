@@ -81,6 +81,7 @@ bint *wrd2bint(bint *x, const uint32_t w) {
   breserve(x, 1);
   x->wrd[0] = w;
   x->siz = uint32_tru(x->wrd, 1);
+//  x->siz = 1;
   x->neg = 0;
   return x;
 }
@@ -109,19 +110,19 @@ static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_
 }
 
 static inline int16_t uint32_sub(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn) {
-  uint32_t carry = 0, dif = 0, dif2 = 0, n = an < bn ? bn : an;
-  for (uint32_t i = 0; i < bn; i++) {
+  uint32_t carry = 0, dif = 0, dif2 = 0, i, n = an < bn ? bn : an;
+  for (i = 0; i < bn; i++) {
     dif = a[i] - carry; // sub and get carry
     carry = dif > a[i];
     dif2 = dif - b[i]; // sub and get carry
     carry += (dif2 > dif);
     ret[i] = dif2;
   }
-  for (uint32_t i = bn; i < an; i++) {
+  for (; i < an; i++) {
     ret[i] = a[i] - carry; // sub and get carry
     carry = ret[i] > a[i];
   }
-  return uint32_tru(ret, n);
+  return uint32_tru(ret, i);
 }
 
 static inline int16_t uint32_addsigned(uint32_t *ret, int16_t *ret_neg, const uint32_t *a, const int16_t an, const int16_t a_neg,
@@ -302,6 +303,7 @@ bint *bmul(bint *ret, const bint *a, const bint *b) {
     memcpy(ret->wrd, tmp, ret->siz * sizeof(uint32_t));
   }
   ret->neg = a->neg ^ b->neg;
+  ret->cap = b->cap;
   return ret;
 }
 

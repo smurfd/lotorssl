@@ -26,7 +26,7 @@ void tester_bint_sanity(void) {
   for (int i = 0; i < 24; i++) assert(yyy[23-i] == d.wrd[i]);
 }
 
-void tester_div_sanity(void) {
+void tester_bint_div_sanity(void) {
   bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, c = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, one = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -34,55 +34,6 @@ void tester_div_sanity(void) {
   bdiv(&c, &tmp, &a, &b);
   wrd2bint(&one, 1);
   assert(cmp(&c, &one) == 0);
-}
-
-#define SWAP(a, b) {bint tmp = a; a = b; b = tmp;}
-bint *gc(bint *ret, bint *k, const bint *p) {
-  bint s = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, os = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint ot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, r = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, or = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint quot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, P = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint qr = {.wrd = {0}, .siz = 0, .cap = 0, .neg = 0}, oqr = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, rtmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint aa  = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, bb = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, cc = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint qs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, qt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, oqs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint oqt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  wrd2bint(ret, 0);
-  int16_t kz = cmp(k, &zero);
-  if (kz == 0) {
-    printf("Divide by zero, not good\n");
-    return NULL; // should never happen
-  } else if (kz < 0) {
-    k->neg = 1;
-    gc(ret, k, p);
-    bsub(ret, p, ret);
-    return ret; // p - inverse_mod(-k, p)
-  }
-  wrd2bint(&os, 1);
-  wrd2bint(&t, 1);
-  str2bint(&P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&r, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&or, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
-  while (cmp(&r, &zero) != 0 && r.siz != 0) {
-    bdiv(&quot, &tmp, &or, &r); // q = or / r
-    bmul(&qr, &quot, &r); // (q * r)
-    bmul(&qs, &quot, &s); // (q * s)
-    bmul(&qt, &quot, &t); // (q * t)
-    bsub(&oqr, &or, &qr); // or = or - (q * r)
-    bsub(&oqs, &os, &qs); // os = os - (q * s)
-    bsub(&oqt, &ot, &qt); // ot = ot - (q * t)
-    SWAP(r, or); // or = r
-    SWAP(s, os); // os = s
-    SWAP(t, ot); // ot = t
-    SWAP(r, oqr); // r = or
-    SWAP(s, oqs); // s = os
-    SWAP(t, oqt); // t = ot
-  }
-  assert(cmp(&or, wrd2bint(&tmp, 1)) == 0); // assert g == 1 // g = or
-  bmul(&aa, &os, k); // x = os, (x * k)
-  bmod(&cc, &bb, &aa, &P); // (x * k) % P
-  if (cc.neg) badd(&cc, p, &cc); // TODO: hack?!
-  assert(cmp(&cc, wrd2bint(&rtmp, 1)) == 0); // assert (k * x) % p == 1
-  bmod(ret, &tmp, &os, p);
-  return ret; // return x % p // TODO: WORKS NOW! use in point_add
 }
 
 void tester_bint_2ways_sanity(void) {
@@ -125,18 +76,15 @@ void tester_bint_2ways_sanity(void) {
 }
 
 int main(void) {
-  bint k = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, gcd = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   tester_bint_sanity();
   tester_bint_2ways_sanity();
-  tester_div_sanity();
+  tester_bint_div_sanity();
   Ftester_sanity();
   Ftester_math_sanity();
+
   Ftester();
 
-  // GCD
-  str2bint(&k, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
-  str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  gc(&gcd, &k, &p);
+  Ftester_PK();
   printf("ok\n");
 }
 

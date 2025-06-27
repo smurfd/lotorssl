@@ -51,6 +51,7 @@ void curve_init(curve *c, char *a, char *b, char *n, char *p, char *g);
 
 void Ftester(void);
 void Ftester2(void);
+void Ftester_PK(void);
 void Ftester_sanity(void);
 void Ftester_math_sanity(void);
 #endif
