@@ -18,10 +18,9 @@ bint *bmod(bint *ret, bint *tmp, const bint *a, const bint *m);
 bint *bgcd(bint *ret, const bint *a, const bint *b);
 bint *str2bint(bint *x, const char *str);
 bint *wrd2bint(bint *x, const uint32_t w);
+bint *bcpy(bint *a, const bint *b, int n);
 void bprint(char *s, bint *a);
-void bprint2(char *s, bint *a);
 int16_t cmp(const bint *a, const bint *b);
 int16_t bbitlen(const bint *a);
-bint *bcpy(bint *a, const bint *b, int n);
 #endif
 

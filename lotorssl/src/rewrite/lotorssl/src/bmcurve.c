@@ -181,8 +181,6 @@ bint *gc(bint *ret, bint *k, const bint *p) {
     return ret; // p - inverse_mod(-k, p)
   }
   qr.siz = 1;
-
-// TODO: fuck p=0
   while (cmp(&r, &zero) != 0 && r.siz != 0) {
     bdiv(&quot, &tmp, &or, &r); // q = or / r
     bmul(&qr, &quot, &r); // (q * r)
@@ -216,12 +214,9 @@ bint *gc(bint *ret, bint *k, const bint *p) {
   int16_t c1 = cmp(&or, wrd2bint(&tmp, 1)), c2 = cmp(&or, p);
   printf("    %d   : %d %d\n", c1 & c2, c1, c2);
   assert((c1 & c2) == 0); // either g == 1 or g == P TODO: hack for now, should just be g == 1
-
   //assert(cmp(&or, wrd2bint(&tmp, 1)) == 0 || cmp(&or, p1) == 0); // assert g == 1 // g = or
   bmul(&aa, &os, k); // x = os, (x * k)
   bmod(&cc, &bb, &aa, p); // (x * k) % P
-//  cc.neg = 0;
-  bprint("CC1", &cc);
   if (cc.neg && cmp(&cc, wrd2bint(&rtmp, 1)) != 0) badd(&cc, p, &cc); // TODO: hack?!
   bprint("CC2", &cc);
   bprint("P", &P);
@@ -249,10 +244,10 @@ void point_init(point *p, prime *a, prime *b, bint *p1) {
     memset(&x37.wrd, 0, LEN * sizeof(uint32_t));
     memset(&x3m.wrd, 0, LEN * sizeof(uint32_t));
     wrd2bint(&B, 7);
-    bmul(&y2, b->f.x, b->f.x); // y*y
-    bmul(&x2, a->f.x, a->f.x); // x*x
-    bmul(&x3, &x2, a->f.x); // x*x*x
-    badd(&x37, &x3, &B); // x*x*x + B
+    bmul(&y2, b->f.x, b->f.x); // y * y
+    bmul(&x2, a->f.x, a->f.x); // x * x
+    bmul(&x3, &x2, a->f.x); // x * x *x
+    badd(&x37, &x3, &B); // x * x * x + B
     bmod(&xx, &tmp, &x37, p1);
     bmod(&yy, &tmp, &y2, p1);
     assert(cmp(&xx, &yy) == 0); // y ** 2 == x ** 3 + (A * x) + B // A = 0, B = 7, (A * x) == 0
@@ -286,8 +281,7 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
     memcpy(ret->prime_y.f.x->wrd, 0, LEN * sizeof(uint32_t));
     return;
   }
-  if (field_eq(&x1.f, &x2.f) == 0) { // if x1 == x2
-    //if x1 == x2: m = (3 * x1 * x2 + curve.a) * inverse_mod(2 * y1, curve.p)
+  if (field_eq(&x1.f, &x2.f) == 0) { // if x1 == x2: m = (3 * x1 * x2 + curve.a) * inverse_mod(2 * y1, curve.p)
     prime xx1, xxx1, xxx1x2, yy1, gg;
     prime_initint(&xx1, 0, p1);
     prime_initint(&xxx1, 0, p1);
@@ -295,7 +289,7 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
 
     field_add(&xx1.f, &x1.f, &x1.f); // x1 + x1
     field_add(&xxx1.f, &xx1.f, &x1.f); // x1 + x1 + x1
-    field_mul(&xxx1x2.f, &xxx1.f, &x2.f); // (x1 + x1 + x1) * x2 + A = 0, so ignore for now
+    field_mul(&xxx1x2.f, &xxx1.f, &x2.f); // (x1 + x1 + x1) * x2 + A, (A = 0, so ignore for now)
 
     field_add(&yy1.f, &y1.f, &y1.f);
     bint g = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
@@ -303,7 +297,7 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
     gc(&g, yy1.f.x, p1);
     prime_init(&gg, &g, p1);
     field_mul(&m.f, &gg.f, &xxx1x2.f);
-  } else {
+  } else { // m = (y1 - y2) * inverse_mod(x1 - x2, curve.p)
     bint g = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
     prime y1y2, x1x2;
     field gg;
@@ -329,8 +323,8 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
   field_sub(&y21.f, &y2.f, &y1.f);
   field_sub(&x21.f, &x2.f, &x1.f);
 
-  field_mul(&x3.f, &m.f, &m.f);
-  field_sub(&x3.f, &x3.f, &x1.f);
+  field_mul(&x3.f, &m.f, &m.f); // m * m
+  field_sub(&x3.f, &x3.f, &x1.f); // m * m - x1
   field_sub(&x3.f, &x3.f, &x2.f); // x3 = m * m - x1 - x2
 
   field_sub(&y3.f, &x3.f, &x1.f); // x3 - x1
@@ -340,7 +334,9 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
   bprint("YYY", y3.f.x);
   memcpy(ret->prime_x.f.x->wrd, x3.f.x->wrd, x3.f.x->siz * sizeof(uint32_t));
   memcpy(ret->prime_y.f.x->wrd, y3.f.x->wrd, y3.f.x->siz * sizeof(uint32_t));
-  // TODO: % p on x3 and y3?  result = (x3 % curve.p, -y3 % curve.p)
+  // x3 = m * m - x1 - x2
+  // y3 = y1 + m * (x3 - x1)
+  // return (x3 % curve.p, -y3 % curve.p)
   return; // return point(x3, y3);
 }
 
@@ -349,6 +345,7 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
   bint t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, z = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   prime pz; // Point multiplication: Double-and-add https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
   point result, addend, aa;
+  wrd2bint(&z, 0);
   wrd2bint(&o, 1);
   wrd2bint(&t, 2);
   prime_initint(&pz, 0, p1);
@@ -357,9 +354,25 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
   point_init(&addend, &a->prime_x, &a->prime_y, p1);
   memset(n.wrd, 0, LEN * sizeof(uint32_t));
   memcpy(n.wrd, k->x->wrd, k->x->siz * sizeof(uint32_t));
+  n.neg = k->x->neg;
+  n.cap = k->x->cap;
+  n.siz = k->x->siz;
+  printf("MULK %d\n", k->x->neg);
+  bprint("N", &n);
+  bprint("Z", &z);
   while (cmp(&n, &z) == 1 && n.siz > 0) {
     bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
     bmod(&b, &tmp, &n, &t);
+    bprint("TMP", &tmp);
+    bprint("TMP N", &n);
+    bprint("TMP T", &t);
+    bprint("TMP B", &b);
+    bprint("TMP O", &o);
+    memcpy(n.wrd, b.wrd, b.siz * sizeof(uint32_t));
+    n.siz = b.siz;
+    n.cap = b.cap;
+    n.neg = b.neg;
+    printf("BO %d\n", cmp(&b, &o));
     if (cmp(&b, &o) == 0) {
       printf("PA 1\n");
       point_add(&result, &result, &addend, p1);
@@ -368,6 +381,7 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
     point_add(&addend, &addend, &addend, p1);
     brshift(&n, &n, 1);  
   }
+  printf("PA 3\n");
   memcpy(ret->prime_x.f.x->wrd, result.prime_x.f.x->wrd, result.prime_x.f.x->siz * sizeof(uint32_t));
   memcpy(ret->prime_y.f.x->wrd, result.prime_y.f.x->wrd, result.prime_y.f.x->siz * sizeof(uint32_t));
 }

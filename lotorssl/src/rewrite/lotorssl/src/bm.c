@@ -5,15 +5,11 @@
 #include <assert.h>
 #include "bm.h"
 
-// ----- Print functions -----
+// ----- Print function -----
 void bprint(char *s, bint *a) {
   printf("%s: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x: %d : neg? %d\n",
     s, a->wrd[19], a->wrd[18], a->wrd[17], a->wrd[16], a->wrd[15], a->wrd[14], a->wrd[13], a->wrd[12], a->wrd[11], a->wrd[10], a->wrd[9], a->wrd[8],
     a->wrd[7], a->wrd[6], a->wrd[5], a->wrd[4], a->wrd[3], a->wrd[2], a->wrd[1], a->wrd[0], a->siz, a->neg);
-}
-
-void bprint2(char *s, bint *a) {
-  printf("%s: ", s); for (int8_t i = LEN - 1; i >= 0; i--) printf("%08x ", a->wrd[i]); printf(" : %d\n", a->siz);
 }
 
 // ----- Helper functions -----
@@ -73,6 +69,8 @@ bint *str2bint(bint *x, const char *str) {
     x->wrd[7 - (i >> 3)] |= val << (4 * (7 - i & 0x7));
   }
   x->siz = (strlen(str) - 2) / 8;
+  x->neg = 0;
+  x->cap = x->siz;
   return x;
 }
 
@@ -80,9 +78,9 @@ bint *wrd2bint(bint *x, const uint32_t w) {
   memset(x->wrd, 0, LEN * sizeof(uint32_t));
   breserve(x, 1);
   x->wrd[0] = w;
-  x->siz = uint32_tru(x->wrd, 1);
-//  x->siz = 1;
+  x->siz = 1; // always set size to 1, even if we set it to zero value
   x->neg = 0;
+  x->cap = 1;
   return x;
 }
 
