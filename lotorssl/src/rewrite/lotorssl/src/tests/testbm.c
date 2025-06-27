@@ -9,8 +9,8 @@
 #include "../bmcurve.h"
 
 void tester_bint_sanity(void) {
-  bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, c = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint d = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint d = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
   str2bint(&b, "0xd7dab791a8647ac88695e20e29960a6fd41707258cc88cc0480ea7e5bb3f132f");
   bmul(&c, &a, &b);
@@ -23,12 +23,12 @@ void tester_bint_sanity(void) {
   uint32_t yyy[LEN] = {0x0b9fcf4f, 0x502f06b5, 0x63974c8f, 0xd64b5275, 0x0b925ec4, 0x138d2863, 0x2fc84b3f, 0x8eedf7c7, 0xd471a809, 0x10236577,
     0x2e1eefc4, 0x91b090a6, 0x24584b32, 0xa122142b, 0x07a6c3ae, 0xfc791d81, 0xcf527e40, 0x53ea119f, 0xfa86f731, 0x89e82d3a, 0xe2650192, 0x831a8fc8,
     0x618fac17, 0x5b568ef0};
-  for (int i = 0; i < 24; i++) assert(yyy[23-i] == d.wrd[i]);
+  for (int i = 0; i < 24; i++) assert(yyy[23 - i] == d.wrd[i]);
 }
 
 void tester_bint_div_sanity(void) {
-  bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, c = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, one = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, one = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&b, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
   bdiv(&c, &tmp, &a, &b);
@@ -37,8 +37,8 @@ void tester_bint_div_sanity(void) {
 }
 
 void tester_bint_2ways_sanity(void) {
-  bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, c = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint d = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, e = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint d = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, e = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   wrd2bint(&b, 0x33333333);
   wrd2bint(&c, 0x3);
@@ -65,19 +65,18 @@ void tester_bint_2ways_sanity(void) {
   memset(d.wrd, 0, LEN * sizeof(uint32_t));
   memset(e.wrd, 0, LEN * sizeof(uint32_t));
   memset(t.wrd, 0, LEN * sizeof(uint32_t));
-  a.neg = d.neg = e.neg = t.neg = a.siz = d.siz = e.siz = t.siz = a.cap = d.cap = e.cap = t.cap = 0;
+  a.neg = d.neg = e.neg = t.neg = a.cap = d.cap = e.cap = t.cap = 0;
+  a.siz = d.siz = e.siz = t.siz = 1;
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&d, "0x0000000000000000000000000000000000000000000000000000003333333333");
-  d.siz = 2;
   bdiv(&e, &t, &a, &d);
   str2bint(&d, "0x000000000500000000050000000005000000000500000000050000000004ffff");
-  d.siz = 7;
   assert(cmp(&d, &e) == 0);
 }
 
 void tester_field(void) {
-  bint p1 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p3 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint x = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, y = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint p1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint x = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, y = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   prime px, py, pz, po1, po2, po3;
   point G1, G2, G3, infinity;
   field f0, f1, f2, f3;
@@ -137,9 +136,9 @@ void tester_field(void) {
 }
 
 void tester_field_sanity(void) {
-  bint aaa = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, bbb = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, ccc = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint ddd = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, hhh = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, jjj = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint r1 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, r2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint aaa = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bbb = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ccc = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint ddd = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, hhh = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, jjj = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   wrd2bint(&aaa, 666);
   wrd2bint(&bbb, 999);
   wrd2bint(&r1, 333);
@@ -154,8 +153,8 @@ void tester_field_sanity(void) {
 
 void tester_field_math_sanity(void) {
   field f1, f2, f3, fr;
-  bint a = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint r1 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, r2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
   str2bint(&b, "0xd7dab791a8647ac88695e20e29960a6fd41707258cc88cc0480ea7e5bb3f132f");
   str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -171,7 +170,7 @@ void tester_field_math_sanity(void) {
 }
 
 void tester_field_PK(void) { // test public & private key creation and verification
-  bint P = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint P = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   prime px, py, pz;
   order priv;
   point publ, G;
@@ -181,7 +180,6 @@ void tester_field_PK(void) { // test public & private key creation and verificat
   prime_initint(&pz, 0, &P);
   prime_init(&px, str2bint(&tmp, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"), &P); // point gx
   prime_init(&py, str2bint(&tmp, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"), &P); // point gy
-
   point_init(&publ, &pz, &pz, &P);
   point_init(&G, &px, &py, &P);
   point_mul(&publ, &G, &priv.f, &P);
@@ -225,7 +223,6 @@ void tester_field_PK(void) { // test public & private key creation and verificat
   assert v == r
   printf("--------- Pass -------------------------------------------------\n");
 */
-
 
 int main(void) {
   tester_bint_sanity();

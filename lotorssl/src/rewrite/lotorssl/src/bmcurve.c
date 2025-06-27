@@ -8,7 +8,7 @@
 
 // ----- Field class -----
 void field_init(field *f, bint *x, bint *p) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   memcpy(f->p, p, sizeof(bint));
   bmod(f->x, &tmp, x, p);
   f->x->siz = x->siz;
@@ -16,7 +16,7 @@ void field_init(field *f, bint *x, bint *p) {
 }
 
 void field_initint(field *f, uint32_t x, bint *p) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   memcpy(f->p, p, sizeof(bint));
   bmod(f->x, &tmp, wrd2bint(&tmp2, x), p);
   f->x->siz = 1;
@@ -31,7 +31,7 @@ int8_t field_eq(field *a, field *b) {
 }
 
 void field_add(field *ret, field *a, field *b) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   assert(cmp(a->p, b->p) == 0);
   tmp.siz = b->x->siz;
   badd(&tmp, b->x, a->x);
@@ -43,7 +43,7 @@ void field_add(field *ret, field *a, field *b) {
 }
 
 void field_sub(field *ret, const field *a, const field *b) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   field aa, bb;
   memcpy(&aa, a, sizeof(field));
   memcpy(&bb, b, sizeof(field));
@@ -67,7 +67,7 @@ void field_sub(field *ret, const field *a, const field *b) {
 }
 
 void field_mul(field *ret, field *a, field *b) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bprint("AP", a->p);
   bprint("BP", b->p);
   assert(cmp(a->p, b->p) == 0);;
@@ -80,7 +80,7 @@ void field_mul(field *ret, field *a, field *b) {
 void field_div(field *ret, field *a, field *b) {
   // TODO: field div does not work! because (self * data ** -1 == self * 1/(data*data)) and bdiv can't handle that.
   // TODO: look into GCD
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bdiv(ret->x, &tmp, a->x, b->x);
   ret->x->siz = a->x->siz;
   ret->p->siz = a->p->siz;
@@ -105,7 +105,7 @@ void order_init(order *o, bint *x, bint *p1) {
 }
 
 void order_initint(order *o, uint32_t x, bint *p1) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   field_initint(&o->f, 0, p1);
   memcpy(o->f.x, wrd2bint(&tmp, x), sizeof(bint));
   str2bint(o->N, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"); // TODO: as arg?
@@ -126,32 +126,29 @@ void prime_init(prime *p, bint *x, bint *p1) {
 }
 
 void prime_initint(prime *p, uint32_t x, bint *p1) {
-  bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   field_initint(&p->f, 0, p1);
   memcpy(p->f.x, wrd2bint(&tmp, x), sizeof(bint));
   memcpy(p->f.p, p1, sizeof(bint));
   memcpy(p->P, p1, sizeof(bint));
   p->f.x->siz = 1;
   p->f.x->neg = 0;
-  p->f.x->cap = 0;
+  p->f.x->cap = 1;
 }
 
-#define SWAP(a, b) {bint tmp = a; a = b; b = tmp;}
+#define SWAP(a, b) {bint tmp = a; a = b; a.siz = b.siz; b = tmp; b.siz = tmp.siz;}
 bint *gc(bint *ret, bint *k, const bint *p) {
-  bint s = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, os = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint ot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, r = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, or = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint quot = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, P = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint qr = {.wrd = {0}, .siz = 0, .cap = 0, .neg = 0}, oqr = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, rtmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint aa  = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, bb = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, cc = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint qs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, qt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, oqs = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint oqt = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint s = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, os = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint ot = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, or = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint quot = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, P = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint qr = {.wrd = {0}, .siz = 1, .cap = 0, .neg = 1}, oqr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, rtmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint aa  = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bb = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, cc = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint qs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, oqs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint oqt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, zero = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   wrd2bint(ret, 0);
   wrd2bint(&os, 1);
   wrd2bint(&t, 1);
   str2bint(&P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  bprint("K", k);
-  printf("P %d %d %d\n", p->neg, p->cap, p->siz);
-  printf("K %d %d %d\n", k->neg, k->cap, k->siz);
   memset(&r.wrd, 0, LEN * sizeof(uint32_t));
   memset(&or.wrd, 0, LEN * sizeof(uint32_t));
   memcpy(&r.wrd, p->wrd, p->siz * sizeof(uint32_t));
@@ -162,12 +159,6 @@ bint *gc(bint *ret, bint *k, const bint *p) {
   r.cap = p->cap;
   r.neg = p->neg;
   r.siz = p->siz;
-  if (p->siz == 0) r.siz = 1;
-  printf("rrrr %d\n", r.siz);
-//  if (r.siz == 0) r.siz = 1;
-  bprint("R1", &r);
-  bprint("OR1", &or);
-  //str2bint(&or, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
   int16_t kz = cmp(k, &zero);
   printf("KZ %d\n", kz);
   if (kz == 0) {
@@ -175,7 +166,6 @@ bint *gc(bint *ret, bint *k, const bint *p) {
     return NULL; // should never happen
   } else if (kz < 0) {
     k->neg = 1;
-    printf("Kneg\n");
     gc(ret, k, p);
     bsub(ret, p, ret);
     return ret; // p - inverse_mod(-k, p)
@@ -212,9 +202,7 @@ bint *gc(bint *ret, bint *k, const bint *p) {
   }
   bprint("OR", &or);
   int16_t c1 = cmp(&or, wrd2bint(&tmp, 1)), c2 = cmp(&or, p);
-  printf("    %d   : %d %d\n", c1 & c2, c1, c2);
   assert((c1 & c2) == 0); // either g == 1 or g == P TODO: hack for now, should just be g == 1
-  //assert(cmp(&or, wrd2bint(&tmp, 1)) == 0 || cmp(&or, p1) == 0); // assert g == 1 // g = or
   bmul(&aa, &os, k); // x = os, (x * k)
   bmod(&cc, &bb, &aa, p); // (x * k) % P
   if (cc.neg && cmp(&cc, wrd2bint(&rtmp, 1)) != 0) badd(&cc, p, &cc); // TODO: hack?!
@@ -227,9 +215,9 @@ bint *gc(bint *ret, bint *k, const bint *p) {
 
 // ----- Point class -----
 void point_init(point *p, prime *a, prime *b, bint *p1) {
-  bint x2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, x3 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, x37 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint x3m = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, xx = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, y2 = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint yy = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, B = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint x2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, x3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, x37 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint x3m = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, xx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, y2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint yy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, B = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   prime p0a, p0b;
   prime_initint(&p0a, 0, p1);
   prime_initint(&p0b, 0, p1);
@@ -292,13 +280,13 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
     field_mul(&xxx1x2.f, &xxx1.f, &x2.f); // (x1 + x1 + x1) * x2 + A, (A = 0, so ignore for now)
 
     field_add(&yy1.f, &y1.f, &y1.f);
-    bint g = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+    bint g = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
     str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
     gc(&g, yy1.f.x, p1);
     prime_init(&gg, &g, p1);
     field_mul(&m.f, &gg.f, &xxx1x2.f);
   } else { // m = (y1 - y2) * inverse_mod(x1 - x2, curve.p)
-    bint g = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, p = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+    bint g = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
     prime y1y2, x1x2;
     field gg;
     str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -311,7 +299,7 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
     printf("gc2 start -----\n");
     gc(&g, x1x2.f.x, p1);
     printf("------- gc2 end\n");
-    field_init(&gg, &g, p1);//&p);
+    field_init(&gg, &g, p1);
     field_mul(&m.f, &gg, &y1y2.f);
   }
   prime sk, x3, y3, x21, y21;
@@ -341,8 +329,8 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
 }
 
 void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this work?!
-  bint b = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, n = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, o = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  bint t = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0}, z = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+  bint b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, n = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, o = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, z = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   prime pz; // Point multiplication: Double-and-add https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
   point result, addend, aa;
   wrd2bint(&z, 0);
@@ -357,11 +345,10 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
   n.neg = k->x->neg;
   n.cap = k->x->cap;
   n.siz = k->x->siz;
-  printf("MULK %d\n", k->x->neg);
   bprint("N", &n);
   bprint("Z", &z);
   while (cmp(&n, &z) == 1 && n.siz > 0) {
-    bint tmp = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
+    bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
     bmod(&b, &tmp, &n, &t);
     bprint("TMP", &tmp);
     bprint("TMP N", &n);
@@ -372,16 +359,12 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
     n.siz = b.siz;
     n.cap = b.cap;
     n.neg = b.neg;
-    printf("BO %d\n", cmp(&b, &o));
     if (cmp(&b, &o) == 0) {
-      printf("PA 1\n");
       point_add(&result, &result, &addend, p1);
     }
-    printf("PA 2\n");
     point_add(&addend, &addend, &addend, p1);
     brshift(&n, &n, 1);  
   }
-  printf("PA 3\n");
   memcpy(ret->prime_x.f.x->wrd, result.prime_x.f.x->wrd, result.prime_x.f.x->siz * sizeof(uint32_t));
   memcpy(ret->prime_y.f.x->wrd, result.prime_y.f.x->wrd, result.prime_y.f.x->siz * sizeof(uint32_t));
 }
