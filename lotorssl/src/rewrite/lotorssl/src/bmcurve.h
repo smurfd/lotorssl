@@ -48,11 +48,5 @@ void point_mul(point *ret, point *a, field *k, bint *p1);
 int8_t point_eq(point *a, point *b);
 
 void curve_init(curve *c, char *a, char *b, char *n, char *p, char *g);
-
-void Ftester(void);
-void Ftester2(void);
-void Ftester_PK(void);
-void Ftester_sanity(void);
-void Ftester_math_sanity(void);
 #endif
 

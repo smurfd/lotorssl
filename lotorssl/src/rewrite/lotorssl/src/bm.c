@@ -110,7 +110,7 @@ static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_
 }
 
 static inline int16_t uint32_sub(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn) {
-  uint32_t carry = 0, dif = 0, dif2 = 0, i, n = an < bn ? bn : an;
+  uint32_t carry = 0, dif = 0, dif2 = 0, i;
   for (i = 0; i < bn; i++) {
     dif = a[i] - carry; // sub and get carry
     carry = dif > a[i];
