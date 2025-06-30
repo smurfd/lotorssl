@@ -33,21 +33,28 @@ int8_t field_eq(field *a, field *b) {
 void field_add(field *ret, field *a, field *b) {
   bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   assert(cmp(a->p, b->p) == 0);
-  tmp.siz = b->x->siz;
-  badd(&tmp, b->x, a->x);
-  if (cmp(b->p, wrd2bint(&tmp2, 0)) == 0) {
-    memcpy(ret->x->wrd, tmp.wrd, tmp.siz * sizeof(uint32_t));
-  } else bmod(ret->x, &tmp2, &tmp, b->p); // (self.x + data.x) % self.p
-  ret->x->siz = a->x->siz;// > b->x->siz ? a->x->siz : b->x->siz;
-  ret->p->siz = a->p->siz;// > b->p->siz ? a->p->siz : b->p->siz;
+  field aa, bb;
+  field_init(&aa, a->x, a->p);
+  field_init(&bb, b->x, b->p);
+//  tmp.siz = b->x->siz;
+  badd(&tmp, &bb.x, &aa.x);
+  //if (cmp(b->p, wrd2bint(&tmp2, 0)) == 0) {
+  //  memcpy(ret->x->wrd, tmp.wrd, tmp.siz * sizeof(uint32_t));
+  //} else bmod(ret->x, &tmp2, &tmp, bb.p); // (self.x + data.x) % self.p
+  bmod(ret->x, &tmp2, &tmp, bb.p); // (self.x + data.x) % self.p
+//  ret->x->siz = a->x->siz;// > b->x->siz ? a->x->siz : b->x->siz;
+//  ret->p->siz = a->p->siz;// > b->p->siz ? a->p->siz : b->p->siz;
 }
 
 void field_sub(field *ret, const field *a, const field *b) {
   bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   field aa, bb;
-  memcpy(&aa, a, sizeof(field));
-  memcpy(&bb, b, sizeof(field));
+  field_init(&aa, a->x, a->p);
+  field_init(&bb, b->x, b->p);
+//  memcpy(&aa, a, sizeof(field));
+//  memcpy(&bb, b, sizeof(field));
   assert(cmp(aa.p, bb.p) == 0);
+/*
   if (cmp(aa.x, bb.x) < 0) {
     memcpy(aa.x->wrd, bb.p->wrd, 8 * sizeof(uint32_t));
     aa.x->siz = 8;
@@ -56,14 +63,14 @@ void field_sub(field *ret, const field *a, const field *b) {
     bmod(ret->x, &tmp2, &tmp, bb.p);
     ret->x->siz = aa.x->siz;
     return;
-  }
-  bb.x->neg = 1;
-  aa.x->neg = 0;
+  }*/
+//  bb.x->neg ^= 1;
+//  aa.x->neg = 0;
   bsub(&tmp, aa.x, bb.x);//b->x, a->x);
-  bb.x->neg = 0;
+//  bb.x->neg = 0;
   bmod(ret->x, &tmp2, &tmp, bb.p); // (self.x - data.x) % self.p
-  ret->x->siz = aa.x->siz;
-  ret->p->siz = aa.p->siz;
+//  ret->x->siz = aa.x->siz;
+//  ret->p->siz = aa.p->siz;
 }
 
 void field_mul(field *ret, field *a, field *b) {
@@ -73,6 +80,11 @@ void field_mul(field *ret, field *a, field *b) {
   assert(cmp(a->p, b->p) == 0);;
   bmul(&tmp, b->x, a->x);
   bmod(ret->x, &tmp2, &tmp, b->p); // (self.x * data.x) % self.p
+  bprint("FAAA", a->x);
+  bprint("FBBB", b->x);
+  bprint("Fmmm", &tmp);
+  bprint("FMmmmm", &tmp2);
+  bprint("RMmmmm", ret->x);
   ret->x->siz = a->x->siz;
   ret->p->siz = a->p->siz;
 }
@@ -318,10 +330,17 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
   field_sub(&y3.f, &x3.f, &x1.f); // x3 - x1
   field_mul(&y3.f, &m.f, &y3.f); // (x3 - x1) * m
   field_add(&y3.f, &y3.f, &y1.f); // y3 = y1 + m * (x3 - x1)
+  y3.f.x->neg ^= 1;
   bprint("XXX", x3.f.x);
   bprint("YYY", y3.f.x);
-  memcpy(ret->prime_x.f.x->wrd, x3.f.x->wrd, x3.f.x->siz * sizeof(uint32_t));
-  memcpy(ret->prime_y.f.x->wrd, y3.f.x->wrd, y3.f.x->siz * sizeof(uint32_t));
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};//, p = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bmod(ret->prime_x.f.x, &tmp, x3.f.x, p1);
+  bmod(ret->prime_y.f.x, &tmp, y3.f.x, p1);
+  bprint("XXXmod", ret->prime_x.f.x);
+  bprint("YYYmod", ret->prime_y.f.x);
+
+//  memcpy(ret->prime_x.f.x->wrd, x3.f.x->wrd, x3.f.x->siz * sizeof(uint32_t));
+//  memcpy(ret->prime_y.f.x->wrd, y3.f.x->wrd, y3.f.x->siz * sizeof(uint32_t));
   // x3 = m * m - x1 - x2
   // y3 = y1 + m * (x3 - x1)
   // return (x3 % curve.p, -y3 % curve.p)
@@ -360,10 +379,16 @@ void point_mul(point *ret, point *a, field *k, bint *p1) { // TODO: does this wo
     n.cap = b.cap;
     n.neg = b.neg;
     if (cmp(&b, &o) == 0) {
+      printf("point add 1_0\n");
       point_add(&result, &result, &addend, p1);
+      printf("point add 1_1\n");
     }
+    printf("point add 2_0\n");
     point_add(&addend, &addend, &addend, p1);
-    brshift(&n, &n, 1);  
+    printf("point add 2_1\n");
+    brshift(&n, &n, 1);
+    printf("point shift\n");
+    bprint("point N", &n);
   }
   memcpy(ret->prime_x.f.x->wrd, result.prime_x.f.x->wrd, result.prime_x.f.x->siz * sizeof(uint32_t));
   memcpy(ret->prime_y.f.x->wrd, result.prime_y.f.x->wrd, result.prime_y.f.x->siz * sizeof(uint32_t));

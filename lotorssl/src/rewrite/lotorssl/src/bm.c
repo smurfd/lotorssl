@@ -195,6 +195,7 @@ bint *brshift(bint *ret, const bint *a, const uint32_t b) {
   int16_t ws = b / 32, bs = b % 32, i = 0;
   if (bs) {
     uint32_t hi, lo = a->wrd[ws];
+    printf("point1 %d %d\n", a->siz, ws);
     for (i = 0; i < a->siz - ws - 1; i++) {
       hi = a->wrd[i + ws + 1];
       ret->wrd[i] = (hi << (32 - bs)) | (lo >> bs);
@@ -204,6 +205,7 @@ bint *brshift(bint *ret, const bint *a, const uint32_t b) {
     ret->neg = ret->neg ^ a->neg;
     ret->siz = uint32_tru(ret->wrd, i);
   } else {
+    printf("point2 %d %d\n", a->siz, ws);
     for (i = 0; i < a->siz - ws; i++) {
       ret->wrd[i] = a->wrd[i + ws];
     }
@@ -403,10 +405,17 @@ bint *bdiv(bint *ret, bint *tmp, const bint *a, const bint *d) {
 }
 
 bint *bmod(bint *ret, bint *tmp, const bint *a, const bint *m) {
+  bint t1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   memset(ret->wrd, 0, LEN * sizeof(uint32_t));
   ret->siz = a->siz;
   bdivmod(tmp, ret, a, m);
-  return tmp;
+  badd(&t3, ret, m);
+  bdivmod(&t1, &t2, &t3, m);
+  memcpy(ret->wrd, t2.wrd, t2.siz * sizeof(uint32_t));
+  ret->neg = t2.neg;
+  ret->siz = t2.siz;
+  ret->cap = t2.cap;
+  return ret;
 }
 
 //

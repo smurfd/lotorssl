@@ -36,6 +36,26 @@ void tester_bint_div_sanity(void) {
   assert(cmp(&c, &one) == 0);
 }
 
+void tester_bint_mod_sanity(void) {
+  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ret = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  str2bint(&a, "0x34ca4d7bd7efe5cfc1462edca66d539c0a77a83d09ce1196c92c514312232a7e");
+  str2bint(&c, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&b, "0x9ce3bc8a331e7860fe957feaab820c680af219522713db054053fdc5b41f424d");
+  str2bint(&r1, "0x32339163b1c163c5132aeb93cffbd83fc98b2045f072b3772675ca04684cbf67");
+  str2bint(&r2, "0xcdcc6e9c4e3e9c3aecd5146c300427c03674dfba0f8d4c88d98a35fa97b33cc8");
+  a.neg = 0;
+  bmul(&tmp, &a, &b);
+  bmod(&ret, &tmp2, &tmp, &c);
+  assert(cmp(&ret, &r1) == 0);
+
+  a.neg = 1;
+  bmul(&tmp, &a, &b);
+  bmod(&ret, &tmp2, &tmp, &c);
+  assert(cmp(&ret, &r2) == 0);
+}
+
 void tester_bint_2ways_sanity(void) {
   bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bint d = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, e = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
@@ -228,6 +248,7 @@ int main(void) {
   tester_bint_sanity();
   tester_bint_2ways_sanity();
   tester_bint_div_sanity();
+  tester_bint_mod_sanity();
   tester_field_sanity();
   tester_field_math_sanity();
   tester_field();
