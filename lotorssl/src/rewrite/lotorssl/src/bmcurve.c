@@ -37,7 +37,7 @@ void field_add(field *ret, field *a, field *b) {
   field_init(&aa, a->x, a->p);
   field_init(&bb, b->x, b->p);
 //  tmp.siz = b->x->siz;
-  badd(&tmp, &bb.x, &aa.x);
+  badd(&tmp, (bint*)&bb.x, (bint*)&aa.x);
   //if (cmp(b->p, wrd2bint(&tmp2, 0)) == 0) {
   //  memcpy(ret->x->wrd, tmp.wrd, tmp.siz * sizeof(uint32_t));
   //} else bmod(ret->x, &tmp2, &tmp, bb.p); // (self.x + data.x) % self.p
@@ -49,8 +49,8 @@ void field_add(field *ret, field *a, field *b) {
 void field_sub(field *ret, const field *a, const field *b) {
   bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   field aa, bb;
-  field_init(&aa, a->x, a->p);
-  field_init(&bb, b->x, b->p);
+  field_init(&aa, (bint*)a->x, (bint*)a->p);
+  field_init(&bb, (bint*)b->x, (bint*)b->p);
 //  memcpy(&aa, a, sizeof(field));
 //  memcpy(&bb, b, sizeof(field));
   assert(cmp(aa.p, bb.p) == 0);
