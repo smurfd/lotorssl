@@ -69,7 +69,7 @@ bint *str2bint(bint *x, const char *str) {
   memset(x->wrd, 0, LEN * sizeof(uint32_t));
   for (int i = 0; i < 64; i++) { // str + 2 to skip 0x from hexstr
     uint32_t val = (uint32_t)((str + 2)[i] < 'a' ? (str + 2)[i] - '0' : (str + 2)[i] - 'a' + 10);
-    x->wrd[7 - (i >> 3)] |= val << (4 * (7 - i & 0x7));
+    x->wrd[7 - (i >> 3)] |= val << (4 * ((7 - i) & 0x7));
   }
   x->siz = (strlen(str) - 2) / 8;
   x->neg = 0;

@@ -277,8 +277,8 @@ void point_add(point *ret, point *a, point *b, bint *p1) {
     return;
   }
   if (field_eq(&x1.f, &x2.f) == 0 && field_eq(&y1.f, &y2.f) != 0) { // if x1 == x2 and y1 != y2: return None
-    memcpy(ret->prime_x.f.x->wrd, 0, LEN * sizeof(uint32_t));
-    memcpy(ret->prime_y.f.x->wrd, 0, LEN * sizeof(uint32_t));
+    memset(ret->prime_x.f.x->wrd, 0, LEN * sizeof(uint32_t));
+    memset(ret->prime_y.f.x->wrd, 0, LEN * sizeof(uint32_t));
     return;
   }
   if (field_eq(&x1.f, &x2.f) == 0) { // if x1 == x2: m = (3 * x1 * x2 + curve.a) * inverse_mod(2 * y1, curve.p)

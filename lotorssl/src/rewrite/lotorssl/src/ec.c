@@ -14,7 +14,7 @@
 static inline void str2uint32(uint32_t *r, const char *s) {
   for (uint8_t i = 0; i < 64; i++) {
     uint32_t val = (uint32_t)(s[i] < 'a' ? s[i] - '0' : s[i] - 'a' + 10);
-    r[(i >> 3)] |= val << (4 * (7 - i & 0x7)); // big endian
+    r[(i >> 3)] |= val << (4 * ((7 - i) & 0x7)); // big endian
   }
 }
 

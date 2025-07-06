@@ -410,8 +410,7 @@ void tester_bint_PK(void) {
   bprint("Bob share x", &boshrx);
   bprint("Bob share y", &boshry);
 
-  bint res1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, res2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint tmp1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, res1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bmul(&res1, &alsk, &bosk);
   bmod(&tmp1, &tmp2, &res1, &CN);
