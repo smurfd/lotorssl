@@ -1,7 +1,7 @@
 #ifndef BM_H
 #define BM_H
 #include <stdint.h>
-#define LEN 90
+#define LEN 3190
 typedef struct bint {
   uint32_t wrd[LEN];
   int16_t neg, siz, cap;

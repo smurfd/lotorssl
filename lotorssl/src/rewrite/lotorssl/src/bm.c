@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "bm.h"
 
+// TODO: fix size in returns, it gets 0 here and there. After than enable first 'if' in cmp()
 // ----- Print function -----
 void bprint(char *s, bint *a) {
   printf("%s: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x: %d : neg? %d\n",
@@ -37,7 +38,7 @@ static inline int16_t uint32_abs(const uint32_t *a, const uint32_t *b, int16_t a
 }
 
 int16_t cmp(const bint *a, const bint *b) {
-  //if (a->siz != b->siz) return 1; // TOOD: fix size, is returning 0 here and there
+  //if (a->siz != b->siz) return 1;
   int16_t len = a->siz > b->siz ? a->siz : b->siz;
   if (len == 0 || len == 1) {
     if (a->wrd[0] > b->wrd[0]) return 1;
@@ -92,7 +93,6 @@ bint *wrd2bint(bint *x, const uint32_t w) {
 // ----- Math Add & Sub functions -----
 static inline int16_t uint32_add(uint32_t *ret, const uint32_t *a, const uint32_t *b, int16_t an, int16_t bn) {
   uint32_t carry = 0, n = an < bn ? an : bn, sum, sum2;
-  //for (i = 0; i < n; i++) {
   for (int16_t i = 0; i < n; i++) {
     sum = (carry + a[i]); // add and get carry(*r, a, b) : a += b; *r = a; return a < b
     carry = (sum < a[i]);
@@ -300,7 +300,7 @@ bint *bmul(bint *ret, const bint *a, const bint *b) {
   }
   ret->neg = a->neg ^ b->neg;
   ret->cap = b->cap;
-  if (ret->siz == 0) ret->siz = 1;
+//  if (ret->siz == 0) ret->siz = 1; // TODO: hack
   return ret;
 }
 
