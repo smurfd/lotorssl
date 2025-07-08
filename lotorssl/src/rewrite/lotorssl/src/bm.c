@@ -38,7 +38,7 @@ static inline int16_t uint32_abs(const uint32_t *a, const uint32_t *b, int16_t a
 }
 
 int16_t cmp(const bint *a, const bint *b) {
-  //if (a->siz != b->siz) return 1;
+  if (a->siz != 0 && a->siz != b->siz) return 1;
   int16_t len = a->siz > b->siz ? a->siz : b->siz;
   if (len == 0 || len == 1) {
     if (a->wrd[0] > b->wrd[0]) return 1;

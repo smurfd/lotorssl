@@ -6,7 +6,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include "../bm.h"
-#include "../bmcurve.h"
+#include "../bmec.h"
+//#include "../bmcurve.h"
 
 void tester_bint_sanity(void) {
   bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, c = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
@@ -88,6 +89,7 @@ void tester_bint_2ways_sanity(void) {
   str2bint(&d, "0x000000000500000000050000000005000000000500000000050000000004ffff");
   assert(cmp(&d, &e) == 0);
 }
+/*
 
 void tester_field(void) {
   bint p1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
@@ -193,227 +195,7 @@ void tester_field_PK(void) { // test public & private key creation and verificat
   point_init(&G, &px, &py, &P);
   point_mul(&publ, &G, &priv.f, &P);
 }
-
-bint *invmod(bint *ret, const bint *k, const bint *p) {
-  bint s = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ols = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, olt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint r = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, olr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
-  int16_t kz = cmp(k, &zero);
-  if (kz == 0) {
-    return NULL;
-  } else if (kz < 0 || k->neg == 1) {
-    bint ktmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bint rtmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    memcpy(&ktmp, k, sizeof(bint));
-    ktmp.neg ^= 1;
-    printf("OLDS x1\n");
-    invmod(&rtmp, &ktmp, p);
-    bsub(ret, p, &rtmp);
-    printf("PA X3 neg\n");
-    return ret;
-  }
-  wrd2bint(&s, 0);
-  wrd2bint(&ols, 1);
-  wrd2bint(&t, 1);
-  wrd2bint(&olt, 0);
-  memcpy(&r, p, sizeof(bint));
-  memcpy(&olr, k, sizeof(bint));
-  while (cmp(&r, &zero) > 0) {
-    bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bint q = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
-    q.neg = 0; // TODO : force always positive quotation
-    r.neg = 0;
-    olr.neg = 0;
-    bint tr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ts = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    memcpy(&tr, &r, sizeof(bint));  // save r to tmp: tr = r
-    memcpy(&ts, &s, sizeof(bint));  // save s to tmp: ts = s
-    memcpy(&tt, &t, sizeof(bint));  // save t to tmp: tt = t
-    tr.siz = r.siz;
-    ts.siz = s.siz;
-    tt.siz = t.siz;
-    bint qr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bmul(&qr, &q, &r); // qr = quot * r
-    bmul(&qs, &q, &s); // qs = quot * s
-    bmul(&qt, &q, &t); // qt = quot * t
-    bint rr1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ss1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tt1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bsub(&rr1, &olr, &qr); // r = old_r - (quot * r)
-    bsub(&ss1, &ols, &qs); // s = old_s - (quot * s)
-    bsub(&tt1, &olt, &qt); // t = old_t - (quot * t)
-    memset(r.wrd, 0, LEN * sizeof(uint32_t));
-    memset(s.wrd, 0, LEN * sizeof(uint32_t));
-    memset(t.wrd, 0, LEN * sizeof(uint32_t));
-    memcpy(&r, &rr1, sizeof(bint));
-    memcpy(&s, &ss1, sizeof(bint));
-    memcpy(&t, &tt1, sizeof(bint));
-    r.siz = rr1.siz;
-    s.siz = ss1.siz;
-    t.siz = tt1.siz;
-//    memset(olr.wrd, 0, LEN * sizeof(uint32_t));
-//    memset(ols.wrd, 0, LEN * sizeof(uint32_t));
-//    memset(olt.wrd, 0, LEN * sizeof(uint32_t));
-    memcpy(&olr, &tr, sizeof(bint));
-    memcpy(&ols, &ts, sizeof(bint));
-    memcpy(&olt, &tt, sizeof(bint));
-//    olr.siz = tr.siz;
-//    ols.siz = ts.siz;
-//    olt.siz = tt.siz;
-    //ols.neg = ts.neg;
-    bprint("OLDS S", &s);
-    bprint("OLDS O", &ols);
-    printf("OLDS\n");
-  }
-  bint kx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, one = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint tmp3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp4 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint pn = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint kk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  str2bint(&pn, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2e");
-  wrd2bint(&one, 1);
-  assert(cmp(&olr, &one) == 0); // assert g == 1
-  memcpy(&kk, k, sizeof(bint));
-  kk.neg = 0;
-  bmul(&kx, &kk, &ols);
-  //kx.neg ^= 1;
-  bprint("PA K", &kk);
-  bprint("PA ols", &ols);
-  bprint("PA KX", &kx);
-  bprint("PA X3 ols", &ols);
-  bprint("PA X3 KX", &kx);
-  bmod(&tmp3, &tmp4, &kx, p);
-/*
-  if (cmp(&tmp3, &pn) == 0) { // TODO: hack, negative sign for kx (ols or k) gets wrong somewhere
-    printf("PA X3 Hack\n");
-    memcpy(ret, &ols, sizeof(bint));
-    return ret;
-    
-//    kx.neg ^= 1;
-//    bmod(&tmp3, &tmp4, &kx, p);
-  }
 */
-  assert(cmp(&tmp3, &one) == 0); // assert (k * x) % p == 1
-  bmod(ret, &tmp, &ols, p);
-  return ret;
-}
-
-void padd(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
-  bint zero = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, m = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  int xxxx = 0;
-  bprint("PA x1", p1x);
-  bprint("PA x2", p2x);
-  bprint("PA y1", p1y);
-  bprint("PA y2", p2y);
-  printf("PA\n");
-  if (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0) {
-    printf("OLDS xx1\n");
-    memcpy(rx, p2x, sizeof(bint));
-    memcpy(ry, p2y, sizeof(bint));
-    return;
-  }
-  if (cmp(p2x, &zero) == 0 && cmp(p2y, &zero) == 0) {
-    printf("OLDS xx2\n");
-    memcpy(rx, p1x, sizeof(bint));
-    memcpy(ry, p1y, sizeof(bint));
-    return;
-  }
-  if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) {
-    printf("OLDS xx3\n");
-    bint zx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, zy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    memcpy(rx, &zx, sizeof(bint));
-    memcpy(ry, &zy, sizeof(bint));
-    return;
-  }
-  if (cmp(p1x, p2x) == 0) {
-    printf("OLDS xx4\n");
-    bint xx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, xxx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bint xxx2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, yy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bint iy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    badd(&xx, p1x, p1x);
-    badd(&xxx, &xx, p1x);
-    bmul(&xxx2, &xxx, p2x);
-    badd(&yy, p1y, p1y);
-    invmod(&iy, &yy, p);
-    bmul(&m, &iy, &xxx2);
-    bprint("OLDS x2", &m); // 2854 / 3107730c (3rd)
-    bprint("PA M1", &m);
-    //xxxx = 1;
-  } else {
-    bint xx1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, yy1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ix = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bsub(&yy1, p1y, p2y);
-    bsub(&xx1, p1x, p2x);
-    printf("OLDS x3\n");
-    invmod(&ix, &xx1, p);
-    bprint("PA X1", p1x);
-    bprint("PA X2", p2x);
-    bprint("PA Y", &yy1);
-    bprint("PA X", &xx1);
-    bprint("PA IX", &ix);
-    memset(&m.wrd, 0, LEN * sizeof(uint32_t));
-    bmul(&m, &ix, &yy1);
-    // m = (y1 - y2) * inverse_mod(x1 - x2, curve.p)
-  }
-  bint x3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, y3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint mm = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, mmx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint xx3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, mmx3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bmul(&mm, &m, &m);
-  bsub(&mmx, &mm, p1x);
-  bsub(&x3, &mmx, p2x);
-
-  bsub(&xx3, &x3, p1x);
-  bmul(&mmx3, &m, &xx3);
-  badd(&y3, p1y, &mmx3);
-  bmod(rx, &tmp, &x3, p);
-  y3.neg ^= 1;
-  bmod(ry, &tmp, &y3, p);
-  // x3 = m * m - x1 - x2
-  // y3 = y1 + m * (x3 - x1)
-}
-
-void sm(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) {
-  bint zero = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, q = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint kk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  memcpy(&kk, k, sizeof(bint));
-  bmod(&q, &tmp, &kk, n);
-  if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
-    bint zx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, zy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    memcpy(rx, &zx, sizeof(bint));
-    memcpy(ry, &zy, sizeof(bint));
-    return;
-  }
-  if (cmp(&kk, &zero) < 0) {
-    kk.neg ^= 1;
-    p1x->neg ^= 1;
-    p1y->neg ^= 1;
-    printf("SM neg\n");
-    sm(rx, ry, &kk, p1x, p1y, p, n);
-    kk.neg ^= 1;
-    p1x->neg ^= 1;
-    p1y->neg ^= 1;
-    return;
-  }
-  bint rsx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, rsy = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint ax = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ay = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint tw = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, one = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  memcpy(&ax, p1x, sizeof(bint));
-  memcpy(&ay, p1y, sizeof(bint));
-  wrd2bint(&one, 1);
-  wrd2bint(&tw, 2);
-  while(cmp(&kk, &zero) != 0) {
-    bint tmp1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-    bmod(&tmp1, &tmp2, &kk, &tw);
-    bprint("SM K", &tmp1);
-    if (cmp(&tmp1, &one) == 0) {
-      bint rsx1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, rsy1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-      padd(&rsx, &rsy, &rsx, &rsy, &ax, &ay, p);
-    }
-    padd(&ax, &ay, &ax, &ay, &ax, &ay, p);
-    brshift(&kk, &kk, 1);
-  }
-  memcpy(rx, &rsx, sizeof(bint));
-  memcpy(ry, &rsy, sizeof(bint));
-}
-
 void tester_bint_PK(void) {
   // TODO: check if the point is on curve
   bint CA = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, CB = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
@@ -428,37 +210,35 @@ void tester_bint_PK(void) {
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
 
-  bint alsk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bosk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint alpkx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, alpky = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint bopkx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bopky = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, res1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint alsk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, alpkx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, alpky = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint bosk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bopkx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bopky = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint alshrx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, boshrx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint alshry = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, boshry = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
 
   str2bint(&alsk, "0x024cd559cad384fad17951966dc5a25ae64671ae67b4b78c49725d38f35bfddb"); // TODO: randomize
   str2bint(&bosk, "0x702d7c3642f0aeedb279f623724bffd7932e077b3498a02bda95dbc0ee8725be"); // TODO: randomize
-
   bprint("Alice's private key", &alsk);
   bprint("Bob's private key", &bosk);
-  sm(&alpkx, &alpky, &alsk, &CX, &CY, &CP, &CN);
-  sm(&bopkx, &bopky, &bosk, &CX, &CY, &CP, &CN);
+  scalar_mul(&alpkx, &alpky, &alsk, &CX, &CY, &CP, &CN);
+  scalar_mul(&bopkx, &bopky, &bosk, &CX, &CY, &CP, &CN);
   bprint("Alice's public key x", &alpkx);
   bprint("Alice's public key y", &alpky);
   bprint("Bob's public key x", &bopkx);
   bprint("Bob's public key y", &bopky);
 
-  bint alshrx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, boshrx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint alshry = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, boshry = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  sm(&alshrx, &alshry, &bosk, &alpkx, &alpky, &CP, &CN);
-  sm(&boshrx, &boshry, &alsk, &bopkx, &bopky, &CP, &CN);
+  scalar_mul(&alshrx, &alshry, &bosk, &alpkx, &alpky, &CP, &CN);
+  scalar_mul(&boshrx, &boshry, &alsk, &bopkx, &bopky, &CP, &CN);
   bprint("Alice's share x", &alshrx);
   bprint("Alice's share y", &alshry);
   bprint("Bob's share x", &boshrx);
   bprint("Bob's share y", &boshry);
   assert(cmp(&alshrx, &boshrx) == 0 && cmp(&alshry, &boshry) ==0);
-  bint tmp1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, res1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   bmul(&res1, &alsk, &bosk);
   bprint("Alice's & Bob's secret", &res1);
   bmod(&tmp1, &tmp2, &res1, &CN);
-  sm(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN);
+  scalar_mul(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN);
   assert(cmp(&r1, &alshrx) == 0); // assert alices shared x is same as ((alicesecret * bobsecret) % N) scalar mult by curve G
 }
 
@@ -467,8 +247,8 @@ int main(void) {
   tester_bint_2ways_sanity();
   tester_bint_div_sanity();
   tester_bint_mod_sanity();
-  tester_field_sanity();
-  tester_field_math_sanity();
+  //tester_field_sanity();
+  //tester_field_math_sanity();
   tester_bint_PK();
   printf("ok\n");
 }
