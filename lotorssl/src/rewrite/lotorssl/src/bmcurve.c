@@ -149,80 +149,78 @@ void prime_initint(prime *p, uint32_t x, bint *p1) {
 }
 
 #define SWAP(a, b) {bint tmp = a; a = b; a.siz = b.siz; b = tmp; b.siz = tmp.siz;}
-bint *gc(bint *ret, bint *k, const bint *p) {
-  bint s = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, os = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint ot = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, or = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint quot = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, P = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint qr = {.wrd = {0}, .siz = 1, .cap = 0, .neg = 1}, oqr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, rtmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint aa  = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bb = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, cc = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint qs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, oqs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint oqt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, zero = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  wrd2bint(ret, 0);
-  wrd2bint(&os, 1);
-  wrd2bint(&t, 1);
-  str2bint(&P, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  memset(&r.wrd, 0, LEN * sizeof(uint32_t));
-  memset(&or.wrd, 0, LEN * sizeof(uint32_t));
-  memcpy(&r.wrd, p->wrd, p->siz * sizeof(uint32_t));
-  memcpy(&or.wrd, k->wrd, k->siz * sizeof(uint32_t));
-  or.cap = k->cap;
-  or.neg = k->neg;
-  or.siz = k->siz;
-  r.cap = p->cap;
-  r.neg = p->neg;
-  r.siz = p->siz;
+bint *gc(bint *ret, const bint *k, const bint *p) {
+  bint s = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ols = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint t = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, olt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint r = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, olr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint zero = {.wrd = {0}, .siz = 0, .neg = 0, .cap = 0};
   int16_t kz = cmp(k, &zero);
-  printf("KZ %d\n", kz);
   if (kz == 0) {
-    printf("Divide by zero, not good\n");
-    return NULL; // should never happen
-  } else if (kz < 0) {
-    k->neg = 1;
-    gc(ret, k, p);
-    bsub(ret, p, ret);
-    return ret; // p - inverse_mod(-k, p)
+    return NULL;
+  } else if (kz < 0 || k->neg == 1) {
+    bint ktmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    bint rtmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    memcpy(&ktmp, k, sizeof(bint));
+    ktmp.neg ^= 1;
+    gc(&rtmp, &ktmp, p);
+    bsub(ret, p, &rtmp);
+    return ret;
   }
-  qr.siz = 1;
-  while (cmp(&r, &zero) != 0 && r.siz != 0) {
-    bdiv(&quot, &tmp, &or, &r); // q = or / r
-    bmul(&qr, &quot, &r); // (q * r)
-    bmul(&qs, &quot, &s); // (q * s)
-    bmul(&qt, &quot, &t); // (q * t)
-    bsub(&oqr, &or, &qr); // or = or - (q * r)
-    bsub(&oqs, &os, &qs); // os = os - (q * s)
-    bsub(&oqt, &ot, &qt); // ot = ot - (q * t)
-    bprint("quot", &quot);
-    bprint("R2", &r);
-    bprint("OR2", &or);
-    bprint("QR2", &qr);
-    bprint("OQR2", &oqr);
-    SWAP(r, or); // or = r
-    SWAP(s, os); // os = s
-    SWAP(t, ot); // ot = t
-    bprint("R3", &r);
-    bprint("OR3", &or);
-    bprint("QR3", &qr);
-    bprint("OQR3", &oqr);
-    SWAP(r, oqr); // r = or
-    SWAP(s, oqs); // s = os
-    SWAP(t, oqt); // t = ot
-    printf("siz %d %d %d: %d %d\n", qr.siz, or.siz, oqr.siz, quot.siz, r.siz);
-    bprint("R4", &r);
-    bprint("OR4", &or);
-    bprint("QR4", &qr);
-    bprint("OQR4", &oqr);
+  wrd2bint(&s, 0);
+  wrd2bint(&ols, 1);
+  wrd2bint(&t, 1);
+  wrd2bint(&olt, 0);
+  memcpy(&r, p, sizeof(bint));
+  memcpy(&olr, k, sizeof(bint));
+  while (cmp(&r, &zero) > 0) {
+    bint tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    bint q = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
+    q.neg = 0; // TODO : force always positive quotation
+    r.neg = 0;
+    olr.neg = 0;
+    bint tr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ts = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    memcpy(&tr, &r, sizeof(bint));  // save r to tmp: tr = r
+    memcpy(&ts, &s, sizeof(bint));  // save s to tmp: ts = s
+    memcpy(&tt, &t, sizeof(bint));  // save t to tmp: tt = t
+    tr.siz = r.siz;
+    ts.siz = s.siz;
+    tt.siz = t.siz;
+    bint qr = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qs = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, qt = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    bmul(&qr, &q, &r); // qr = quot * r
+    bmul(&qs, &q, &s); // qs = quot * s
+    bmul(&qt, &q, &t); // qt = quot * t
+    bint rr1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ss1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tt1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+    bsub(&rr1, &olr, &qr); // r = old_r - (quot * r)
+    bsub(&ss1, &ols, &qs); // s = old_s - (quot * s)
+    bsub(&tt1, &olt, &qt); // t = old_t - (quot * t)
+    memset(r.wrd, 0, LEN * sizeof(uint32_t));
+    memset(s.wrd, 0, LEN * sizeof(uint32_t));
+    memset(t.wrd, 0, LEN * sizeof(uint32_t));
+    memcpy(&r, &rr1, sizeof(bint));
+    memcpy(&s, &ss1, sizeof(bint));
+    memcpy(&t, &tt1, sizeof(bint));
+    r.siz = rr1.siz;
+    s.siz = ss1.siz;
+    t.siz = tt1.siz;
+    memcpy(&olr, &tr, sizeof(bint));
+    memcpy(&ols, &ts, sizeof(bint));
+    memcpy(&olt, &tt, sizeof(bint));
   }
-  bprint("OR", &or);
-  int16_t c1 = cmp(&or, wrd2bint(&tmp, 1)), c2 = cmp(&or, p);
-  assert((c1 & c2) == 0); // either g == 1 or g == P TODO: hack for now, should just be g == 1
-  bmul(&aa, &os, k); // x = os, (x * k)
-  bmod(&cc, &bb, &aa, p); // (x * k) % P
-  if (cc.neg && cmp(&cc, wrd2bint(&rtmp, 1)) != 0) badd(&cc, p, &cc); // TODO: hack?!
-  bprint("CC2", &cc);
-  bprint("P", &P);
-  assert(cmp(&cc, wrd2bint(&rtmp, 1)) == 0); // assert (k * x) % p == 1
-  bmod(ret, &tmp, &os, p);
-  return ret; // return x % p
+  bint kx = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, one = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint tmp3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp4 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint pn = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint kk = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  str2bint(&pn, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2e");
+  wrd2bint(&one, 1);
+  assert(cmp(&olr, &one) == 0); // assert g == 1
+  memcpy(&kk, k, sizeof(bint));
+  kk.neg = 0;
+  bmul(&kx, &kk, &ols);
+  bmod(&tmp3, &tmp4, &kx, p);
+  assert(cmp(&tmp3, &one) == 0); // assert (k * x) % p == 1
+  bmod(ret, &tmp, &ols, p);
+  return ret;
 }
 
 // ----- Point class -----
