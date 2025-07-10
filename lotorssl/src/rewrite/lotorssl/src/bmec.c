@@ -114,20 +114,19 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
 }
 
 void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) {
-  bint zero = bcreate(), q = bcreate(), tmp = bcreate(), kk = bcreate();
-  memcpy(&kk, k, sizeof(bint));//k->siz * sizeof(uint32_t) + (3 * sizeof(int16_t)));
-  bmod(&q, &tmp, &kk, n);
+  bint zero = bcreate(), q = bcreate(), tmp = bcreate();
+  bmod(&q, &tmp, k, n);
   if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
     bint zx = bcreate(), zy = bcreate();
     memcpy(rx, &zx, sizeof(bint));
     memcpy(ry, &zy, sizeof(bint));
     return;
-  } else if (cmp(&kk, &zero) < 0) {
-    kk.neg ^= 1;
+  } else if (cmp(k, &zero) < 0) {
+    k->neg ^= 1;
     p1x->neg ^= 1;
     p1y->neg ^= 1;
-    scalar_mul(rx, ry, &kk, p1x, p1y, p, n);
-    kk.neg ^= 1;
+    scalar_mul(rx, ry, k, p1x, p1y, p, n);
+    k->neg ^= 1;
     p1x->neg ^= 1;
     p1y->neg ^= 1;
     return;
@@ -137,14 +136,14 @@ void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint
   wrd2bint(&tw, 2);
   memcpy(&ax, p1x, sizeof(bint));
   memcpy(&ay, p1y, sizeof(bint));
-  while(cmp(&kk, &zero) != 0) {
+  while(cmp(k, &zero) != 0) {
     bint tmp1 = bcreate(), tmp2 = bcreate();
-    bmod(&tmp1, &tmp2, &kk, &tw);
+    bmod(&tmp1, &tmp2, k, &tw);
     if (cmp(&tmp1, &one) == 0) {
       point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, p);
     }
     point_add(&ax, &ay, &ax, &ay, &ax, &ay, p);
-    brshift(&kk, &kk, 1);
+    brshift(k, k, 1);
   }
   memcpy(rx, &rsx, sizeof(bint));
   memcpy(ry, &rsy, sizeof(bint));

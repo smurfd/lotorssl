@@ -17,9 +17,9 @@ hash:
 	${CC} -c ../../../hash.c -o .build/hash.o -lm
 
 bmec:
-	${CC} -c bm.c -o .build/bm.o -lm
-	${CC} -c bmec.c -o .build/bmec.o -lm
-	${CC} -c bmcurve.c -o .build/bmcurve.o -lm
+	${CC} -c bm.c -o .build/bm.o
+	${CC} -c bmec.c -o .build/bmec.o
+	${CC} -c bmcurve.c -o .build/bmcurve.o
 #bmfield:
 #	${CC} -c bmfield.c -o .build/bmfield.o
 

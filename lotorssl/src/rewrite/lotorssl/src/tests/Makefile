@@ -1,4 +1,4 @@
-C := gcc -O3 -ffast-math -Wall -pedantic -std=c99
+CC := gcc -O3 -ffast-math -Wall -pedantic -std=c99
 BUILD := ../.build
 
 all: build runner
