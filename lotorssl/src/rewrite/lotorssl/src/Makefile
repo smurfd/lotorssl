@@ -8,18 +8,18 @@ mkbuilddir:
 	mkdir -p ${BUILD}
 
 ecdsa:
-	${CC} -c ecdsa.c -o .build/ecdsa.o
+	${CC} -c ecdsa.c -o .build/ecdsa.o -lm
 
 ec:
-	${CC} -c ec.c -o .build/ec.o
+	${CC} -c ec.c -o .build/ec.o -lm
 
 hash:
-	${CC} -c ../../../hash.c -o .build/hash.o
+	${CC} -c ../../../hash.c -o .build/hash.o -lm
 
 bmec:
-	${CC} -c bm.c -o .build/bm.o
-	${CC} -c bmec.c -o .build/bmec.o
-	${CC} -c bmcurve.c -o .build/bmcurve.o
+	${CC} -c bm.c -o .build/bm.o -lm
+	${CC} -c bmec.c -o .build/bmec.o -lm
+	${CC} -c bmcurve.c -o .build/bmcurve.o -lm
 #bmfield:
 #	${CC} -c bmfield.c -o .build/bmfield.o
 

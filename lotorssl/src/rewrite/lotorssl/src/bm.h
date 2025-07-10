@@ -7,6 +7,7 @@ typedef struct bint {
   int16_t neg, siz, cap;
 } bint;
 
+bint bcreate(void);
 bint *bsetbit(bint *a, const uint32_t i);
 bint *blshift(bint *ret, const bint *a, const uint32_t b);
 bint *brshift(bint *ret, const bint *a, const uint32_t b);

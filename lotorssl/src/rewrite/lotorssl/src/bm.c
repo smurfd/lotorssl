@@ -59,11 +59,16 @@ bint *breserve(bint *a, int cap) {
   return a;
 }
 
-int16_t static inline count_zeros(bint *a) {
+static inline int16_t count_zeros(bint *a) {
   int16_t co = a->siz - 1;
   while(a->wrd[co] == 0 && co > 0) co--;
   return a->siz - co - 1;
 }
+
+bint bcreate(void) {
+  bint x = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}; return x;
+}
+
 
 // ----- Helper convert functions -----
 bint *str2bint(bint *x, const char *str) {
@@ -300,13 +305,12 @@ bint *bmul(bint *ret, const bint *a, const bint *b) {
   }
   ret->neg = a->neg ^ b->neg;
   ret->cap = b->cap;
-//  if (ret->siz == 0) ret->siz = 1; // TODO: hack
   return ret;
 }
 
 // ----- Div functions ----
 static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) {
-  bint *quot = ret, *rema = rem, den = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint *quot = ret, *rema = rem, den = bcreate();
   rema->siz = rem->siz;
   quot->siz = ret->siz;
   rema->neg = rem->neg;
@@ -356,8 +360,7 @@ bint *bdiv(bint *ret, bint *tmp, const bint *a, const bint *d) {
 }
 
 bint *bmod(bint *ret, bint *tmp, const bint *a, const bint *m) {
-  bint t1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, t3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint ret1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint t1 = bcreate(), t2 = bcreate(), t3 = bcreate(), ret1 = bcreate();
   bdivmod(tmp, &ret1, a, m);
   badd(&t3, &ret1, m);
   bdivmod(&t1, &t2, &t3, m);

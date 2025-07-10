@@ -9,8 +9,7 @@
 #include "../bmcurve.h"
 
 void tester_field(void) {
-  bint p1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p3 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint x = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, y = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint p1 = bcreate(), p2 = bcreate(), p3 = bcreate(), x = bcreate(), y = bcreate();
   prime px, py, pz, po1, po2, po3;
   point G1, G2, G3, infinity;
   field f0, f1, f2, f3;
@@ -65,9 +64,7 @@ void tester_field(void) {
 }
 
 void tester_field_sanity(void) {
-  bint aaa = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, bbb = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, ccc = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint ddd = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, hhh = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, jjj = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint aaa = bcreate(), bbb = bcreate(), ccc = bcreate(), ddd = bcreate(), hhh = bcreate(), jjj = bcreate(), r1 = bcreate(), r2 = bcreate(), tmp = bcreate();
   wrd2bint(&aaa, 666);
   wrd2bint(&bbb, 999);
   wrd2bint(&r1, 333);
@@ -81,9 +78,8 @@ void tester_field_sanity(void) {
 }
 
 void tester_field_math_sanity(void) {
+  bint a = bcreate(), b = bcreate(), p = bcreate(), r1 = bcreate(), r2 = bcreate();
   field f1, f2, f3, fr;
-  bint a = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, b = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, p = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
-  bint r1 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, r2 = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
   str2bint(&b, "0xd7dab791a8647ac88695e20e29960a6fd41707258cc88cc0480ea7e5bb3f132f");
   str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -99,7 +95,7 @@ void tester_field_math_sanity(void) {
 }
 
 void tester_field_PK(void) { // test public & private key creation and verification // TODO this is not working
-  bint P = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1}, tmp = {.wrd = {0}, .siz = 1, .neg = 0, .cap = 1};
+  bint P = bcreate(), tmp = bcreate();
   prime px, py, pz;
   order priv;
   point publ, G;
