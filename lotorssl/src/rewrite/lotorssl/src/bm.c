@@ -308,6 +308,7 @@ bint *bmul(bint *ret, const bint *a, const bint *b) {
   return ret;
 }
 
+
 // ----- Div functions ----
 static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) {
   bint *quot = ret, *rema = rem, den = bcreate();
@@ -323,16 +324,16 @@ static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) 
     wrd2bint(rema, aw % bw);
     ret->neg = a->neg;
     rem->neg = a->neg ^ d->neg;
-    memcpy(rem, rema, sizeof(bint));
-    memcpy(ret, quot, sizeof(bint));
+    BCPY(*(bint*)rem, *(bint*)rema);
+    BCPY(*(bint*)ret, *(bint*)quot);
     return ret;
   }
-  memcpy(rema, a, sizeof(bint));
+  BCPY(*(bint*)rema, *(bint*)a);
   rema->siz = a->siz;
   rema->neg = 0;
   wrd2bint(&den, 0);
   if (uint32_abs(rema->wrd, d->wrd, rema->siz, d->siz) >= 0) {
-    memcpy(&den, d, sizeof(bint));
+    BCPY(den, *(bint*)d);
     int32_t sh = bbitlen(rema) - bbitlen(&den);
     blshift(&den, &den, sh);
     den.neg = 0;
@@ -344,8 +345,8 @@ static inline bint *bdivmod(bint *ret, bint *rem, const bint *a, const bint *d) 
       brshift(&den, &den, 1);
     }
   }
-  memcpy(rem, rema, sizeof(bint));
-  memcpy(ret, quot, sizeof(bint));
+  BCPY(*(bint*)rem, *(bint*)rema);
+  BCPY(*(bint*)ret, *(bint*)quot);
   rem->neg = a->neg;
   ret->neg = a->neg ^ d->neg;
   rem->siz = rema->siz;
@@ -364,7 +365,7 @@ bint *bmod(bint *ret, bint *tmp, const bint *a, const bint *m) {
   bdivmod(tmp, &ret1, a, m);
   badd(&t3, &ret1, m);
   bdivmod(&t1, &t2, &t3, m);
-  memcpy(ret, &t2, sizeof(bint));
+  BCPY(*(bint*)ret, t2);
   return ret;
 }
 

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <time.h>
 #include "../bm.h"
 #include "../bmec.h"
 
@@ -84,7 +85,7 @@ void tester_bint_2ways_sanity(void) {
   assert(cmp(&d, &e) == 0);
 }
 
-void tester_bint_PK(void) {
+static inline void tester_bint_PK(void) {
   // TODO: check if the point is on curve
   bint CA = bcreate(), CB = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), CH = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
   bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bosk = bcreate(), bopkx = bcreate(), bopky = bcreate(), r1 = bcreate(), r2 = bcreate();
@@ -114,7 +115,9 @@ int main(void) {
   tester_bint_2ways_sanity();
   tester_bint_div_sanity();
   tester_bint_mod_sanity();
+  clock_t start = clock();
   for (int i = 0; i < 1000; i++) tester_bint_PK();
+  printf("pk loop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
   printf("ok\n");
 }
 

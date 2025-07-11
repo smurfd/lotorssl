@@ -15,7 +15,7 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
     return NULL;
   } else if (kz < 0 || k->neg == 1) {
     bint ktmp = bcreate(), rtmp = bcreate();
-    memcpy(&ktmp, k, sizeof(bint));
+    BCPY(ktmp, *(bint*)k);
     ktmp.neg ^= 1;
     inverse_mod(&rtmp, &ktmp, p);
     bsub(ret, p, &rtmp);
@@ -25,41 +25,31 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   wrd2bint(&ols, 1);
   wrd2bint(&t, 1);
   wrd2bint(&olt, 0);
-  memcpy(&r, p, sizeof(bint));
-  memcpy(&olr, k, sizeof(bint));
+  BCPY(r, *(bint*)p);
+  BCPY(olr, *(bint*)k);
   while (cmp(&r, &zero) > 0) {
-    bint tmp = bcreate(), q = bcreate(), tr = bcreate(), ts = bcreate(), tt = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate();
-    bint rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate();
+    bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate();
     bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
     q.neg = 0; // TODO : force always positive quotation
     r.neg = 0;
     olr.neg = 0;
-    memcpy(&tr, &r, sizeof(bint));  // save r to tmp: tr = r
-    memcpy(&ts, &s, sizeof(bint));  // save s to tmp: ts = s
-    memcpy(&tt, &t, sizeof(bint));  // save t to tmp: tt = t
-    tr.siz = r.siz;
-    ts.siz = s.siz;
-    tt.siz = t.siz;
     bmul(&qr, &q, &r); // qr = quot * r
     bmul(&qs, &q, &s); // qs = quot * s
     bmul(&qt, &q, &t); // qt = quot * t
     bsub(&rr1, &olr, &qr); // r = old_r - (quot * r)
     bsub(&ss1, &ols, &qs); // s = old_s - (quot * s)
     bsub(&tt1, &olt, &qt); // t = old_t - (quot * t)
-    memcpy(&r, &rr1, sizeof(bint));
-    memcpy(&s, &ss1, sizeof(bint));
-    memcpy(&t, &tt1, sizeof(bint));
-    r.siz = rr1.siz;
-    s.siz = ss1.siz;
-    t.siz = tt1.siz;
-    memcpy(&olr, &tr, sizeof(bint));
-    memcpy(&ols, &ts, sizeof(bint));
-    memcpy(&olt, &tt, sizeof(bint));
+    BSWP(r, olr); // r <-> old_r
+    BSWP(s, ols); // s <-> old_s
+    BSWP(t, olt); // t <-> old_t
+    BSWP(r, rr1); // r <-> old_r - (quot * r)
+    BSWP(s, ss1); // s <-> old_s - (quot * s)
+    BSWP(t, tt1); // t <-> old_t - (quot * t)
   }
   bint kx = bcreate(), one = bcreate(), tmp = bcreate(), tmp3 = bcreate(), tmp4 = bcreate(), kk = bcreate();
   wrd2bint(&one, 1);
   assert(cmp(&olr, &one) == 0); // assert g == 1
-  memcpy(&kk, k, sizeof(bint));
+  BCPY(kk, *(bint*)k);
   kk.neg = 0;
   bmul(&kx, &kk, &ols);
   bmod(&tmp3, &tmp4, &kx, p);
@@ -68,20 +58,20 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   return ret;
 }
 
-void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
+static inline void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
   bint zero = bcreate(), m = bcreate();
   if (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0) {
-    memcpy(rx, p2x, sizeof(bint));
-    memcpy(ry, p2y, sizeof(bint));
+    BCPY(*(bint*)rx, *(bint*)p2x);
+    BCPY(*(bint*)ry, *(bint*)p2y);
     return;
   } else if (cmp(p2x, &zero) == 0 && cmp(p2y, &zero) == 0) {
-    memcpy(rx, p1x, sizeof(bint));
-    memcpy(ry, p1y, sizeof(bint));
+    BCPY(*(bint*)rx, *(bint*)p1x);
+    BCPY(*(bint*)ry, *(bint*)p1y);
     return;
   } else if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) {
-    bint zx = bcreate(), zy = bcreate();
-    memcpy(rx, &zx, sizeof(bint));
-    memcpy(ry, &zy, sizeof(bint));
+    bint zx = bcreate();//, zy = bcreate();
+    BCPY(*(bint*)rx, zx);
+    BCPY(*(bint*)ry, zx);
     return;
   } else if (cmp(p1x, p2x) == 0) {
     bint xx = bcreate(), xxx = bcreate(), xxx2 = bcreate(), yy = bcreate(), iy = bcreate();
@@ -101,25 +91,23 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
   bint x3 = bcreate(), y3 = bcreate(), mm = bcreate(), mmx = bcreate(), xx3 = bcreate(), mmx3 = bcreate(), tmp = bcreate();
   bmul(&mm, &m, &m);
   bsub(&mmx, &mm, p1x);
-  bsub(&x3, &mmx, p2x);
+  bsub(&x3, &mmx, p2x); // x3 = m * m - x1 - x2
 
   bsub(&xx3, &x3, p1x);
   bmul(&mmx3, &m, &xx3);
-  badd(&y3, p1y, &mmx3);
+  badd(&y3, p1y, &mmx3); // y3 = y1 + m * (x3 - 1)
   bmod(rx, &tmp, &x3, p);
   y3.neg ^= 1;
   bmod(ry, &tmp, &y3, p);
-  // x3 = m * m - x1 - x2
-  // y3 = y1 + m * (x3 - x1)
 }
 
 void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) {
   bint zero = bcreate(), q = bcreate(), tmp = bcreate();
   bmod(&q, &tmp, k, n);
   if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
-    bint zx = bcreate(), zy = bcreate();
-    memcpy(rx, &zx, sizeof(bint));
-    memcpy(ry, &zy, sizeof(bint));
+    bint zx = bcreate();
+    BCPY(*(bint*)rx, zx);
+    BCPY(*(bint*)ry, zx);
     return;
   } else if (cmp(k, &zero) < 0) {
     k->neg ^= 1;
@@ -134,8 +122,8 @@ void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint
   bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), tw = bcreate(), one = bcreate();
   wrd2bint(&one, 1);
   wrd2bint(&tw, 2);
-  memcpy(&ax, p1x, sizeof(bint));
-  memcpy(&ay, p1y, sizeof(bint));
+  BCPY(ax, *(bint*)p1x);
+  BCPY(ay, *(bint*)p1y);
   while(cmp(k, &zero) != 0) {
     bint tmp1 = bcreate(), tmp2 = bcreate();
     bmod(&tmp1, &tmp2, k, &tw);
@@ -145,6 +133,6 @@ void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint
     point_add(&ax, &ay, &ax, &ay, &ax, &ay, p);
     brshift(k, k, 1);
   }
-  memcpy(rx, &rsx, sizeof(bint));
-  memcpy(ry, &rsy, sizeof(bint));
+  BCPY(*(bint*)rx, rsx);
+  BCPY(*(bint*)ry, rsy);
 }

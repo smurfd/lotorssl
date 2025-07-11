@@ -1,6 +1,8 @@
 #ifndef BM_H
 #define BM_H
 #include <stdint.h>
+#define BCPY(a, b) a = b
+#define BSWP(a, b) {bint tmp = a; a = b; b = tmp;}
 #define LEN 81
 typedef struct bint {
   uint32_t wrd[LEN];
