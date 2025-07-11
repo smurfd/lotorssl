@@ -116,7 +116,8 @@ int main(void) {
   tester_bint_div_sanity();
   tester_bint_mod_sanity();
   clock_t start = clock();
-  for (int i = 0; i < 1000; i++) tester_bint_PK();
+  //for (int i = 0; i < 1000; i++)
+  tester_bint_PK();
   printf("pk loop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
   printf("ok\n");
 }
