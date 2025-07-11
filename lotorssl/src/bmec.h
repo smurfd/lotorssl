@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
-#include "bm.h"
+#include "lotormath/src/lotormath.h"
 
 void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n);
 #endif

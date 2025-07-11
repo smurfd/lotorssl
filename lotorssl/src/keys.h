@@ -2,7 +2,7 @@
 #ifndef KEYS_H
 #define KEYS_H 1
 #define BLOCK 1024
-#define LEN 4096
+#define KLEN 4096
 #define BYTES 48
 #define DIGITS (BYTES / 8)
 #define u64 unsigned long long int // because linux uint64_t is not same as on mac

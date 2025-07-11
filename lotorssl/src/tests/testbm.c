@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
-#include "../bm.h"
+#include "../lotormath/src/lotormath.h"
 #include "../bmec.h"
 
 void tester_bint_sanity(void) {

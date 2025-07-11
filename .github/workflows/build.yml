@@ -12,9 +12,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get -y install gcc make openssl
+      run: sudo apt-get update && sudo apt-get -y install gcc make openssl git
     - name: Generate cert debug
       run: sh lotorssl/src/scripts/gen_cert_debug.sh
+    - name: Get lotormath
+      run: git clone https://github.com/smurfd/lotormath lotorssl/src/lotormath
     - name: Compile
       run: make -Clotorssl/src
 
@@ -23,8 +25,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get -y install gcc make openssl
+      run: sudo apt-get update && sudo apt-get -y install gcc make openssl git
     - name: Generate cert debug
       run: sh lotorssl/src/scripts/gen_cert_debug.sh
+    - name: Get lotormath
+      run: git clone https://github.com/smurfd/lotormath lotorssl/src/lotormath
     - name: Compile
       run: make -Clotorssl/src

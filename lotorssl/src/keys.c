@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "keys.h"
+#include "lotormath/src/lotormath.h"
 
 // Static variables
 static char enc[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
@@ -45,7 +46,7 @@ int base64enc(char ed[], const uint8_t *data, int inl) {
 //
 // Base64 decoder
 int base64dec(uint8_t dd[], const char *data, int inl) {
-  static char dec[LEN] = {0};
+  static char dec[KLEN] = {0};
   int ol = inl / 4 * 3;
   for (int i = 1; i <= 2; i++) {if (data[inl - i] == '=') ol--;}
   for (int i = 0; i < 64; i++) dec[(uint8_t)enc[i]] = i;

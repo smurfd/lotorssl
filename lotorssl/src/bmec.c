@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
-#include "bm.h"
+#include "lotormath/src/lotormath.h"
 #include "bmec.h"
 
 static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
