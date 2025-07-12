@@ -2,6 +2,5 @@
 lotorssl/src/lightcrypto/__*
 lotorssl/src/lightbig
 lotorssl/src/.build/
-lotorssl/src/lotormath
 ca*
 lotorssl/src/rewrite/lotorssl/src/.build

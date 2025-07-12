@@ -31,7 +31,7 @@ struct asn {
 #define A1IA5STRI 0x22 // Header byte of the ASN.1 type IA5String
 #define A1UTCTIME 0x23 // Header byte of the ASN.1 type UTCTime
 #define A1GENTIME 0x24 // Header byte of the ASN.1 type GeneralizedTime
-
+#define LEN 4096
 int crypto_init(const char *host, const char *port, bool b);
 void crypto_transfer_key(int s, bool snd, head *h, key *k);
 void crypto_transfer_data(const int s, void* data, head *h, bool snd, u64 len);
