@@ -9,10 +9,10 @@ mkbuilddir:
 	mkdir -p ${BUILD}
 
 checksubmodules:
-	$(foreach var,$(SUBMODULES), \
-		if [ -d $(var) ]; then \
-			echo "$(var) exists"; \
-			if [ -f "README.md" ]; then \
+	for s in ${SUBMODULES} ; do \
+		if [ -d $$s ]; then \
+			if [ -f "$$s/README.md" ]; then \
+				echo $$s;\
 			else \
 				git submodule init; \
 				git submodule update; \
@@ -20,8 +20,9 @@ checksubmodules:
 		else \
 			git submodule init; \
 			git submodule update; \
-		fi; \
-	)
+		fi;\
+	done
+
 cryp:
 	${CC} -c cryp.c -o ${BUILD}/cryp.o
 
