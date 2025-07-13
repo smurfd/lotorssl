@@ -391,6 +391,147 @@ uint8_t tester_bint_2ways_sanity(void) {
   return 1;
 }
 
+
+/*
+170 def sign(priv, msg, u=None):
+171     G = priv.ecc_setup.G
+172     r = priv.ecc_setup.r
+173
+174     # 1. Compute message representative f = H(m), using a cryptographic hash function.
+175     #    Note that f can be greater than r but not longer (measuring bits).
+176     msg_hash = get_msg_hash(msg)
+177
+178     while True:
+179         # 2. Select a random integer u in the interval [1, r - 1].
+180         if u is None:
+181             u = randint(1, r - 1)
+182
+183         # 3. Compute V = uG = (xV, yV) and c ≡ xV mod r  (goto (2) if c = 0).
+184         V = u * G
+185         c = V.x % r
+186         if c == 0:
+187             print(f"c={c}")
+188             continue
+189         d = (modinv(u, r) * (msg_hash + priv.secret * c)) % r
+190         if d == 0:
+191             print(f"d={d}")
+192             continue
+193         break
+194
+195     signature = ECDSASignature(c, d)
+196     return signature
+197
+198
+199 def verify_signature(pub, msg, signature):
+200     r = pub.ecc_setup.r
+201     G = pub.ecc_setup.G
+202     c = signature.c
+203     d = signature.d
+204
+205     # Verify that c and d are integers in the interval [1, r - 1].
+206     def num_ok(n):
+207         return 1 < n < (r - 1)
+208
+209     if not num_ok(c):
+210         raise ValueError(f"Invalid signature value: c={c}")
+211     if not num_ok(d):
+212         raise ValueError(f"Invalid signature value: d={d}")
+213
+214     # Compute f = H(m) and h ≡ d^-1 mod r.
+215     msg_hash = get_msg_hash(msg)
+216     h = modinv(d, r)
+217
+218     # Compute h1 ≡ f·h mod r and h2 ≡ c·h mod r.
+219     h1 = (msg_hash * h) % r
+220     h2 = (c * h) % r
+221
+222     # Compute h1G + h2W = (x1, y1) and c1 ≡ x1 mod r.
+223     # Accept the signature if and only if c1 = c.
+224     P = h1 * G + h2 * pub.W
+225     c1 = P.x % r
+226     rv = c1 == c
+227     return rv
+*/
+void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
+  bint u = bcreate(), Vx = bcreate(), Vy = bcreate(), c = bcreate(), zero = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
+  bint mc = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), d = bcreate(), hc = bcreate(), tmp = bcreate();
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  str2bint(&hash1,  "0xaaaaaa111111115555555577777779999999fffffccccc000222222266666667"); // TODO: use hash
+  wrd2bint(&zero, 0);
+  str2bint(&u, "0x11234567890abcdef01234567890abcdef01234567890abcdef0123456789abc"); // TODO: randomize
+  bprint("hhhh", &hash1);
+  bprint("uuuu", &u);
+  while (true) {
+    scalar_mul(&Vx, &Vy, &u, &CX, &CY, &CP, &CN);
+    str2bint(&u, "0x01234567890abcdef01234567890abcdef01234567890abcdef0123456789abc"); // TODO: randomize
+    bmod(&c, &tmp, &Vx, &CN);
+    bprint("VVV X", &Vx);
+    bprint("VVV Y", &Vy);
+    bprint("CCC", &c);
+    bprint("N", &CN);
+    bprint("u", &u);
+    if (cmp(&c, &zero) == 0) {
+      bprint("C", &c);
+      continue;
+    }
+    inverse_mod(&mi, &u, &CN);
+    badd(&h, &hash1, pri); // pri = secret key
+    bmul(&hc, &h, &c);
+    bmul(&mc, &mi, &hc);
+    bprint("miii",  &mi);
+    bprint("hc", &hc);
+    bprint("MC", &mc);
+    bmod(&d, &tmp, &mc, &CN);
+    if (cmp(&d, &zero) == 0) {
+      bprint("D", &d);
+      continue;
+    }
+    break;
+  }
+  BCPY(*(bint*)sigx, c);
+  BCPY(*(bint*)sigy, d);
+  bprint("SIGNX", sigx);
+  bprint("SIGNY", sigy);
+  bprint("s c", &c);
+  bprint("s d", &d);
+}
+
+int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
+  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), zero = bcreate(), hash1 = bcreate(), tmp = bcreate();
+  bint h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
+  bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  str2bint(&hash1,  "0xaaaaaa111111115555555577777779999999fffffccccc000222222266666667"); // TODO: use hash
+  wrd2bint(&zero, 0);
+  inverse_mod(&h, sigy, &CN);
+  bmul(&tmp, &hash1, &h);
+  bmod(&h1, &tmp2, &tmp, &CN);
+
+  wrd2bint(&tmp, 0);
+  wrd2bint(&tmp2, 0);
+  bmul(&tmp, sigx, &h);
+  bmod(&h2, &tmp2, &tmp, &CN);
+  bprint("h1", &h1);
+  bprint("h2", &h2);
+  scalar_mul(&h1x, &h1y, &h1, &CX, &CY, &CP, &CN);
+  scalar_mul(&h2x, &h2y, &h2, pubx, puby, &CP, &CN);
+  bprint("h1x", &h1x);
+  bprint("h2x", &h2x);
+  point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, &CP);
+  bmod(&c1, &tmp2, &Px, &CN);
+  bprint("PX", &Px);
+  bprint("C2", sigx);
+  bprint("C1", &c1);
+  bprint("C22", &tmp2);
+  return cmp(&c1, sigx) == 0; // c1 == c?
+}
+
 uint8_t tester_bint_PK(void) {
   // TODO: check if the point is on curve
   bint CA = bcreate(), CB = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), CH = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
@@ -414,6 +555,11 @@ uint8_t tester_bint_PK(void) {
   bmod(&tmp1, &tmp2, &res1, &CN);
   scalar_mul(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN); // scale with curve G
   assert(cmp(&r1, &alshrx) == 0); // assert alices shared x is same as ((alicesecret * bobsecret) % N) scalar mult by curve G
+
+  // sign and verify // TODO: doesnt work
+  bint sx = bcreate(), sy = bcreate();
+  sign(&sx, &sy, &bosk, "hallu wurld");
+  printf("verify %d\n", verify(&bopkx, &bopky, "hellu wurld", &sx, &sy));
   return 1;
 }
 

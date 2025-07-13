@@ -8,7 +8,7 @@
 #include "lotormath/src/lotormath.h"
 #include "bmec.h"
 
-static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
+bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate(), zero = bcreate();
   int16_t kz = cmp(k, &zero);
   if (kz == 0) {
@@ -58,7 +58,7 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   return ret;
 }
 
-static inline void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
+void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
   bint zero = bcreate(), m = bcreate();
   if (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0) {
     BCPY(*(bint*)rx, *(bint*)p2x);
