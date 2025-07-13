@@ -1,12 +1,22 @@
-CC:=gcc -O3 -ffast-math -Wall -pedantic -std=c99
-BUILD:=.build
+CC := gcc -O3 -ffast-math -Wall -pedantic -std=c99
+BUILD := .build
+SUBMODULES := lotormath
 
-all: mkbuilddir cryp hash keys ciph ec test
-local: mkbuilddir cryp hash keys ciph test_local
+all: mkbuilddir checksubmodules cryp hash keys ciph ec test
+local: mkbuilddir checksubmodules cryp hash keys ciph test_local
 
 mkbuilddir:
 	mkdir -p ${BUILD}
 
+checksubmodules:
+	$(foreach var,$(SUBMODULES), \
+		if [ -d $(var) ]; then \
+			echo "$(var) exists"; \
+		else \
+			git submodule init; \
+			git submodule update; \
+		fi; \
+	)
 cryp:
 	${CC} -c cryp.c -o ${BUILD}/cryp.o
 

@@ -22,10 +22,7 @@ Hashing: SHA3-256, SHA3-512<br>
 
 ### Compile lotorssl
 ```bash
-git clone https://github.com/smurfd/lotorssl
-git submodule init
-git submodule update
-make -lotorssl/src
+make -lotorssl/src # fetches submodules if they dont exist
 ```
 
 ### Use lotorssl
