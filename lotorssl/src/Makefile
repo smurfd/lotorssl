@@ -12,6 +12,11 @@ checksubmodules:
 	$(foreach var,$(SUBMODULES), \
 		if [ -d $(var) ]; then \
 			echo "$(var) exists"; \
+			if [ -f "README.md" ]; then \
+			else \
+				git submodule init; \
+				git submodule update; \
+			fi; \
 		else \
 			git submodule init; \
 			git submodule update; \
