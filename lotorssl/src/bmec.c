@@ -69,7 +69,7 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
     BCPY(*(bint*)ry, *(bint*)p1y);
     return;
   } else if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) {
-    bint zx = bcreate();//, zy = bcreate();
+    bint zx = bcreate();
     BCPY(*(bint*)rx, zx);
     BCPY(*(bint*)ry, zx);
     return;
@@ -101,7 +101,38 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
   bmod(ry, &tmp, &y3, p);
 }
 
-void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) {
+void point_mul(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p0) {
+  bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), z = bcreate(), k = bcreate(), di = bcreate(), two = bcreate(), one = bcreate(), tmp = bcreate();
+  bint p = bcreate();
+  str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  BCPY(r1x, *(bint*)p1x);
+  BCPY(r1y, *(bint*)p1y);
+  BCPY(k, *(bint*)p0);
+  wrd2bint(&two, 2);
+  wrd2bint(&one, 1);
+  for (int i = bbitlen(p0); i >= 0; i--) {
+    bint kt = bcreate();
+    brshift(&kt, &k, i);
+    bmod(&di, &tmp, &kt, &two);
+    bint dii = bcreate(), diim = bcreate(), tmp = bcreate();
+    badd(&dii, &di, &one);
+    bmod(&diim, &tmp, &dii, &two);
+    if (cmp(&diim, &one) == 0) {
+      point_add(&r1x, &r1y, &r0x, &r0y, &r1x, &r1y, &p);
+    } else {
+      point_add(&r0x, &r0y, &r0x, &r0y, &r1x, &r1y, &p);
+    }
+    if (cmp(&di, &one) == 0) {
+      point_add(&r1x, &r1y, &r1x, &r1y, &r1x, &r1y, &p);
+    } else {
+      point_add(&r0x, &r0y, &r0x, &r0y, &r0x, &r0y, &p);
+    }
+  }
+  BCPY(*(bint*)rx, r0x);
+  BCPY(*(bint*)ry, r0y);
+}
+
+void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) { // TODO: fix k as const
   bint zero = bcreate(), q = bcreate(), tmp = bcreate();
   bmod(&q, &tmp, k, n);
   if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
