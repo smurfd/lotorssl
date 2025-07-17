@@ -391,6 +391,14 @@ uint8_t tester_bint_2ways_sanity(void) {
   return 1;
 }
 
+//
+// Securely randomize arrays
+static void bintrnd_array(bint *r, int len) {
+  FILE *f = fopen("/dev/urandom", "r");
+  fread(r->wrd, sizeof(uint32_t), len, f);
+  fclose(f);
+}
+
 void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
   bint u = bcreate(), Vx = bcreate(), Vy = bcreate(), c = bcreate(), zero = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
   bint mc = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), d = bcreate(), hc = bcreate(), tmp = bcreate();
@@ -398,13 +406,15 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
-  str2bint(&hash1,  "0xaaaaaa111111115555555577777779999999fffffccccc000222222266666667"); // TODO: use hash
+  uint8_t in1[1024] = {0}, out1[512] = {0};
+  memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
+  hash_shake_new(out1, 64, in1, strlen(msg));
+  memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
+
   wrd2bint(&zero, 0);
-  str2bint(&u, "0x11234567890abcdef01234567890abcdef01234567890abcdef0123456789abc"); // TODO: randomize
+  bintrnd_array(&u, 8);
   while (true) {
-    str2bint(&u, "0x01234567890abcdef01234567890abcdef01234567890abcdef0123456789abc"); // TODO: randomize
-    point_mul(&Vx, &Vy, &CX, &CY, &u);
-    str2bint(&u, "0x01234567890abcdef01234567890abcdef01234567890abcdef0123456789abc"); // TODO: randomize
+    point_mul(&Vx, &Vy, &CX, &CY, &u, &CP);
     bmod(&c, &tmp, &Vx, &CN);
     if (cmp(&c, &zero) == 0) {
       continue;
@@ -431,7 +441,11 @@ int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
-  str2bint(&hash1,  "0xaaaaaa111111115555555577777779999999fffffccccc000222222266666667"); // TODO: use hash
+  uint8_t in1[1024] = {0}, out1[512] = {0};
+  memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
+  hash_shake_new(out1, 64, in1, strlen(msg));
+  memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
+
   wrd2bint(&zero, 0);
   inverse_mod(&h, sigy, &CN);
   bmul(&tmp, &hash1, &h);
@@ -448,11 +462,10 @@ int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   return cmp(&c1, sigx) == 0; // c1 == c?
 }
 
-uint8_t tester_bint_PK(void) {
-  // TODO: check if the point is on curve
+uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
   bint CA = bcreate(), CB = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), CH = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
   bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bosk = bcreate(), bopkx = bcreate(), bopky = bcreate(), r1 = bcreate(), r2 = bcreate();
-  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), res1 = bcreate();
+  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), res1 = bcreate(), sx = bcreate(), sy = bcreate();
   wrd2bint(&CA, 0); // Curve parameters
   wrd2bint(&CB, 7);
   wrd2bint(&CH, 1);
@@ -460,25 +473,19 @@ uint8_t tester_bint_PK(void) {
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
-  str2bint(&alsk, "0x024cd559cad384fad17951966dc5a25ae64671ae67b4b78c49725d38f35bfddb"); // TODO: randomize
-  str2bint(&bosk, "0x702d7c3642f0aeedb279f623724bffd7932e077b3498a02bda95dbc0ee8725be"); // TODO: randomize
+  bintrnd_array(&alsk, 8);
+  bintrnd_array(&bosk, 8);
   scalar_mul(&alpkx, &alpky, &alsk, &CX, &CY, &CP, &CN); // Alice's public key
-  str2bint(&alsk, "0x024cd559cad384fad17951966dc5a25ae64671ae67b4b78c49725d38f35bfddb"); // TODO: randomize
   scalar_mul(&bopkx, &bopky, &bosk, &CX, &CY, &CP, &CN); // Bob's public key
-  str2bint(&bosk, "0x702d7c3642f0aeedb279f623724bffd7932e077b3498a02bda95dbc0ee8725be"); // TODO: randomize
   scalar_mul(&alshrx, &alshry, &bosk, &alpkx, &alpky, &CP, &CN); // Alice's shared secret
-  str2bint(&bosk, "0x702d7c3642f0aeedb279f623724bffd7932e077b3498a02bda95dbc0ee8725be"); // TODO: randomize
   scalar_mul(&boshrx, &boshry, &alsk, &bopkx, &bopky, &CP, &CN); // Bob's shared secret
-  str2bint(&alsk, "0x024cd559cad384fad17951966dc5a25ae64671ae67b4b78c49725d38f35bfddb"); // TODO: randomize
   assert(cmp(&alshrx, &boshrx) == 0 && cmp(&alshry, &boshry) == 0); // assert alices shared secret is the same as bobs shared secret
   bmul(&res1, &alsk, &bosk); // alice's and bob's secret
   bmod(&tmp1, &tmp2, &res1, &CN);
   scalar_mul(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN); // scale with curve G
   assert(cmp(&r1, &alshrx) == 0); // assert alices shared x is same as ((alicesecret * bobsecret) % N) scalar mult by curve G
 
-  // sign and verify
-  bint sx = bcreate(), sy = bcreate();
-  sign(&sx, &sy, &bosk, "hallu wurld");
+  sign(&sx, &sy, &bosk, "hellu wurld"); // Sign and verify
   assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
   return 1;
 }

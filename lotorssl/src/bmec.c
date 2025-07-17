@@ -8,6 +8,7 @@
 #include "lotormath/src/lotormath.h"
 #include "bmec.h"
 
+// TODO: document functions
 bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate(), zero = bcreate();
   int16_t kz = cmp(k, &zero);
@@ -30,9 +31,6 @@ bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   while (cmp(&r, &zero) > 0) {
     bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate();
     bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
-    q.neg = 0; // TODO : force always positive quotation
-    r.neg = 0;
-    olr.neg = 0;
     bmul(&qr, &q, &r); // qr = quot * r
     bmul(&qs, &q, &s); // qs = quot * s
     bmul(&qt, &q, &t); // qt = quot * t
@@ -101,68 +99,53 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
   bmod(ry, &tmp, &y3, p);
 }
 
-void point_mul(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p0) {
-  bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), z = bcreate(), k = bcreate(), di = bcreate(), two = bcreate(), one = bcreate(), tmp = bcreate();
-  bint p = bcreate();
-  str2bint(&p, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint *p0, const bint *p) {
+  bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), k = bcreate(), di = bcreate(), two = bcreate(), one = bcreate(), tmp = bcreate();
   BCPY(r1x, *(bint*)p1x);
   BCPY(r1y, *(bint*)p1y);
   BCPY(k, *(bint*)p0);
   wrd2bint(&two, 2);
   wrd2bint(&one, 1);
-  for (int i = bbitlen(p0); i >= 0; i--) {
+  for (int i = bbitlen(p0) - 1; i >= 0; i--) {
     bint kt = bcreate();
     brshift(&kt, &k, i);
     bmod(&di, &tmp, &kt, &two);
     bint dii = bcreate(), diim = bcreate(), tmp = bcreate();
     badd(&dii, &di, &one);
     bmod(&diim, &tmp, &dii, &two);
-    if (cmp(&diim, &one) == 0) {
-      point_add(&r1x, &r1y, &r0x, &r0y, &r1x, &r1y, &p);
-    } else {
-      point_add(&r0x, &r0y, &r0x, &r0y, &r1x, &r1y, &p);
-    }
-    if (cmp(&di, &one) == 0) {
-      point_add(&r1x, &r1y, &r1x, &r1y, &r1x, &r1y, &p);
-    } else {
-      point_add(&r0x, &r0y, &r0x, &r0y, &r0x, &r0y, &p);
-    }
+    if (diim.wrd[0]) point_add(&r1x, &r1y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
+    else point_add(&r0x, &r0y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
+    if (di.wrd[0]) point_add(&r1x, &r1y, &r1x, &r1y, &r1x, &r1y, (bint*)p);
+    else point_add(&r0x, &r0y, &r0x, &r0y, &r0x, &r0y, (bint*)p);
   }
   BCPY(*(bint*)rx, r0x);
   BCPY(*(bint*)ry, r0y);
 }
 
-void scalar_mul(bint *rx, bint *ry, bint *k, bint *p1x, bint *p1y, bint *p, bint *n) { // TODO: fix k as const
-  bint zero = bcreate(), q = bcreate(), tmp = bcreate();
-  bmod(&q, &tmp, k, n);
+void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
+  bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), tw = bcreate(), one = bcreate();
+  bint zero = bcreate(), q = bcreate(), tmp = bcreate(), kt = bcreate(), zx = bcreate();
+  BCPY(kt, *(bint*)k);
+  bmod(&q, &tmp, &kt, n);
   if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
-    bint zx = bcreate();
     BCPY(*(bint*)rx, zx);
     BCPY(*(bint*)ry, zx);
     return;
-  } else if (cmp(k, &zero) < 0) {
-    k->neg ^= 1;
-    p1x->neg ^= 1;
-    p1y->neg ^= 1;
-    scalar_mul(rx, ry, k, p1x, p1y, p, n);
-    k->neg ^= 1;
-    p1x->neg ^= 1;
-    p1y->neg ^= 1;
+  } else if (cmp(&kt, &zero) < 0) {
+    kt.neg ^= 1;
+    scalar_mul(rx, ry, &kt, p1x, p1y, p, n);
     return;
   }
-  bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), tw = bcreate(), one = bcreate();
   wrd2bint(&one, 1);
   wrd2bint(&tw, 2);
   BCPY(ax, *(bint*)p1x);
   BCPY(ay, *(bint*)p1y);
-  while(cmp(k, &zero) != 0) {
+  while(cmp(&kt, &zero) != 0) {
     bint tmp1 = bcreate(), tmp2 = bcreate();
-    bmod(&tmp1, &tmp2, k, &tw);
-    if (cmp(&tmp1, &one) == 0) {
-      point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, p);
-    }
-    point_add(&ax, &ay, &ax, &ay, &ax, &ay, p);
-    brshift(k, k, 1);
+    bmod(&tmp1, &tmp2, &kt, &tw);
+    if (cmp(&tmp1, &one) == 0) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p);
+    point_add(&ax, &ay, &ax, &ay, &ax, &ay, (bint*)p);
+    brshift(&kt, &kt, 1);
   }
   BCPY(*(bint*)rx, rsx);
   BCPY(*(bint*)ry, rsy);
