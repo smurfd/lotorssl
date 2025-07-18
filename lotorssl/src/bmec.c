@@ -1,5 +1,6 @@
 // Auth: smurfd, 2025 More reading at the bottom of the file; 2 spacs indent; 150 width                                                             //
 // ------------------------------------------------------------------------------------------------------------------------------------------------ //
+#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -7,8 +8,10 @@
 #include <stdio.h>
 #include "lotormath/src/lotormath.h"
 #include "bmec.h"
+#include "hash.h"
 
 // TODO: document functions
+// TODO: struct point bint x, bint y?
 bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate(), zero = bcreate();
   int16_t kz = cmp(k, &zero);
@@ -48,7 +51,6 @@ bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   wrd2bint(&one, 1);
   assert(cmp(&olr, &one) == 0); // assert g == 1
   BCPY(kk, *(bint*)k);
-  kk.neg = 0;
   bmul(&kx, &kk, &ols);
   bmod(&tmp3, &tmp4, &kx, p);
   assert(cmp(&tmp3, &one) == 0); // assert (k * x) % p == 1
@@ -149,4 +151,108 @@ void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *
   }
   BCPY(*(bint*)rx, rsx);
   BCPY(*(bint*)ry, rsy);
+}
+
+//
+// Securely randomize arrays
+static inline void bintrnd_array(bint *r, int len) {
+  FILE *f = fopen("/dev/urandom", "r");
+  fread(r->wrd, sizeof(uint32_t), len, f);
+  fclose(f);
+}
+
+void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
+  bint u = bcreate(), Vx = bcreate(), Vy = bcreate(), c = bcreate(), zero = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
+  bint mc = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), d = bcreate(), hc = bcreate(), tmp = bcreate();
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  uint8_t in1[1024] = {0}, out1[512] = {0};
+  memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
+  hash_shake_new(out1, 64, in1, strlen(msg));
+  memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
+
+  wrd2bint(&zero, 0);
+  bintrnd_array(&u, 8);
+  while (true) {
+    point_mul(&Vx, &Vy, &CX, &CY, &u, &CP);
+    bmod(&c, &tmp, &Vx, &CN);
+    if (cmp(&c, &zero) == 0) {
+      continue;
+    }
+    inverse_mod(&mi, &u, &CN);
+    bmul(&hc, pri, &c); // pri * c (pri == secret key)
+    badd(&h, &hash1, &hc); // hash_msg + pri * c
+    bmul(&mc, &mi, &h);
+    bmod(&d, &tmp, &mc, &CN);
+    if (cmp(&d, &zero) == 0) {
+      continue;
+    }
+    break;
+  }
+  BCPY(*(bint*)sigx, c);
+  BCPY(*(bint*)sigy, d);
+}
+
+int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
+  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), zero = bcreate(), hash1 = bcreate(), tmp = bcreate();
+  bint h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
+  bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  uint8_t in1[1024] = {0}, out1[512] = {0};
+  memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
+  hash_shake_new(out1, 64, in1, strlen(msg));
+  memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
+
+  wrd2bint(&zero, 0);
+  inverse_mod(&h, sigy, &CN);
+  bmul(&tmp, &hash1, &h);
+  bmod(&h1, &tmp2, &tmp, &CN);
+
+  wrd2bint(&tmp, 0);
+  wrd2bint(&tmp2, 0);
+  bmul(&tmp, sigx, &h);
+  bmod(&h2, &tmp2, &tmp, &CN);
+  scalar_mul(&h1x, &h1y, &h1, &CX, &CY, &CP, &CN);
+  scalar_mul(&h2x, &h2y, &h2, pubx, puby, &CP, &CN);
+  point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, &CP);
+  bmod(&c1, &tmp2, &Px, &CN);
+  return cmp(&c1, sigx) == 0; // c1 == c?
+}
+
+void genkeypair(bint *pubx, bint *puby, bint *sec) {
+  bint CA = bcreate(), CB = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), CH = bcreate();
+  wrd2bint(&CA, 0); // Curve parameters
+  wrd2bint(&CB, 7);
+  wrd2bint(&CH, 1);
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  bintrnd_array(sec, 8); // private key
+  scalar_mul(pubx, puby, sec, &CX, &CY, &CP, &CN); // public key
+}
+
+void gensharedsecret(bint *shrx, bint *shry, bint *sec, bint *pubx, bint *puby) {
+  bint CP = bcreate(), CN = bcreate();
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  scalar_mul(shrx, shry, sec, pubx, puby, &CP, &CN);
+}
+
+void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, bint *alsk, bint *bosk) {
+  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), tmp1 = bcreate(), tmp2 = bcreate(), res1 = bcreate(), r1 = bcreate(), r2 = bcreate();
+  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
+  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  assert(cmp(alshrx, boshrx) == 0 && cmp(alshry, boshry) == 0); // assert alices shared secret is the same as bobs shared secret
+  bmul(&res1, alsk, bosk); // alice's and bob's secret
+  bmod(&tmp1, &tmp2, &res1, &CN);
+  scalar_mul(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN); // scale with curve G
+  assert(cmp(&r1, alshrx) == 0); // assert alices shared x is same as ((alicesecret * bobsecret) % N) scalar mult by curve G
 }
