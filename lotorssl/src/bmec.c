@@ -219,6 +219,7 @@ void genkeypair(bint *pubx, bint *puby, bint *sec) {
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  bintrnd_array(sec, 8);
   scalar_mul(pubx, puby, sec, &CX, &CY, &CP, &CN); // public key
 }
 

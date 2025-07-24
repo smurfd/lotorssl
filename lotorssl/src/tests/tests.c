@@ -391,18 +391,16 @@ uint8_t tester_bint_2ways_sanity(void) {
 }
 
 uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
-  bint u = bcreate(), alsk = bcreate();
+  bint u = bcreate(), alsk = bcreate(), bosk = bcreate();
   clock_t start = clock();
+  bintrnd_array(&u, 8);
   for (int i = 0; i < 1000; i++) {
-    bintrnd_array(&u, 8); // private key
-    bintrnd_array(&alsk, 8);
-    bint alpkx = bcreate(), alpky = bcreate(), bosk = bcreate(), bopkx = bcreate(), bopky = bcreate();
+    bint alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
     bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
     genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
     genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
     gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
     gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
-
     verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
     sign(&sx, &sy, &bosk, "hellu wurld", u); // Sign and verify
     assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
