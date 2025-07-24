@@ -12,9 +12,10 @@
 
 // TODO: document functions
 // TODO: struct point bint x, bint y?
+// TODO: struct for curve or curve consts
 bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
-  bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate(), zero = bcreate();
-  int16_t kz = cmp(k, &zero);
+  bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate();
+  int16_t kz = cmp(k, &zero0);
   if (kz == 0) {
     return NULL;
   } else if (kz < 0 || k->neg == 1) {
@@ -31,8 +32,8 @@ bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   wrd2bint(&olt, 0);
   BCPY(r, *(bint*)p);
   BCPY(olr, *(bint*)k);
-  while (cmp(&r, &zero) > 0) {
-    bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate();
+  bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate(), kx = bcreate();
+  while (cmp(&r, &zero0) > 0) {
     bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
     bmul(&qr, &q, &r); // qr = quot * r
     bmul(&qs, &q, &s); // qs = quot * s
@@ -47,31 +48,27 @@ bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
     BSWP(s, ss1); // s <-> old_s - (quot * s)
     BSWP(t, tt1); // t <-> old_t - (quot * t)
   }
-  bint kx = bcreate(), one = bcreate(), tmp = bcreate(), tmp3 = bcreate(), tmp4 = bcreate(), kk = bcreate();
-  wrd2bint(&one, 1);
-  assert(cmp(&olr, &one) == 0); // assert g == 1
-  BCPY(kk, *(bint*)k);
-  bmul(&kx, &kk, &ols);
-  bmod(&tmp3, &tmp4, &kx, p);
-  assert(cmp(&tmp3, &one) == 0); // assert (k * x) % p == 1
+  assert(cmp(&olr, &one1) == 0); // assert g == 1
+  bmul(&kx, k, &ols);
+  bmod(ret, &tmp, &kx, p);
+  assert(cmp(ret, &one1) == 0); // assert (k * x) % p == 1
   bmod(ret, &tmp, &ols, p);
   return ret;
 }
 
 void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
-  bint zero = bcreate(), m = bcreate();
-  if (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0) {
+  bint m = bcreate();
+  if (cmp(p1x, &zero0) == 0 && cmp(p1y, &zero0) == 0) {
     BCPY(*(bint*)rx, *(bint*)p2x);
     BCPY(*(bint*)ry, *(bint*)p2y);
     return;
-  } else if (cmp(p2x, &zero) == 0 && cmp(p2y, &zero) == 0) {
+  } else if (cmp(p2x, &zero0) == 0 && cmp(p2y, &zero0) == 0) {
     BCPY(*(bint*)rx, *(bint*)p1x);
     BCPY(*(bint*)ry, *(bint*)p1y);
     return;
   } else if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) {
-    bint zx = bcreate();
-    BCPY(*(bint*)rx, zx);
-    BCPY(*(bint*)ry, zx);
+    BCPY(*(bint*)rx, zero0);
+    BCPY(*(bint*)ry, zero0);
     return;
   } else if (cmp(p1x, p2x) == 0) {
     bint xx = bcreate(), xxx = bcreate(), xxx2 = bcreate(), yy = bcreate(), iy = bcreate();
@@ -102,19 +99,16 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
 }
 
 void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint *p0, const bint *p) {
-  bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), k = bcreate(), di = bcreate(), two = bcreate(), one = bcreate(), tmp = bcreate();
+  bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), k = bcreate(), di = bcreate(), tmp = bcreate();
+  bint dii = bcreate(), diim = bcreate(), kt = bcreate();
   BCPY(r1x, *(bint*)p1x);
   BCPY(r1y, *(bint*)p1y);
   BCPY(k, *(bint*)p0);
-  wrd2bint(&two, 2);
-  wrd2bint(&one, 1);
   for (int i = bbitlen(p0) - 1; i >= 0; i--) {
-    bint kt = bcreate();
     brshift(&kt, &k, i);
-    bmod(&di, &tmp, &kt, &two);
-    bint dii = bcreate(), diim = bcreate(), tmp = bcreate();
-    badd(&dii, &di, &one);
-    bmod(&diim, &tmp, &dii, &two);
+    bmod(&di, &tmp, &kt, &two2);
+    badd(&dii, &di, &one1);
+    bmod(&diim, &tmp, &dii, &two2);
     if (diim.wrd[0]) point_add(&r1x, &r1y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
     else point_add(&r0x, &r0y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
     if (di.wrd[0]) point_add(&r1x, &r1y, &r1x, &r1y, &r1x, &r1y, (bint*)p);
@@ -125,27 +119,24 @@ void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint 
 }
 
 void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
-  bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), tw = bcreate(), one = bcreate();
-  bint zero = bcreate(), q = bcreate(), tmp = bcreate(), kt = bcreate(), zx = bcreate();
+  bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), q = bcreate(), kt = bcreate(), zx = bcreate();
+  bint tmp = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
   BCPY(kt, *(bint*)k);
   bmod(&q, &tmp, &kt, n);
-  if (cmp(&q, &zero) == 0 || (cmp(p1x, &zero) == 0 && cmp(p1y, &zero) == 0)) {
+  if (cmp(&q, &zero0) == 0 || (cmp(p1x, &zero0) == 0 && cmp(p1y, &zero0) == 0)) {
     BCPY(*(bint*)rx, zx);
     BCPY(*(bint*)ry, zx);
     return;
-  } else if (cmp(&kt, &zero) < 0) {
+  } else if (cmp(&kt, &zero0) < 0) {
     kt.neg ^= 1;
     scalar_mul(rx, ry, &kt, p1x, p1y, p, n);
     return;
   }
-  wrd2bint(&one, 1);
-  wrd2bint(&tw, 2);
   BCPY(ax, *(bint*)p1x);
   BCPY(ay, *(bint*)p1y);
-  while(cmp(&kt, &zero) != 0) {
-    bint tmp1 = bcreate(), tmp2 = bcreate();
-    bmod(&tmp1, &tmp2, &kt, &tw);
-    if (cmp(&tmp1, &one) == 0) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p);
+  while(cmp(&kt, &zero0) != 0) {
+    bmod(&tmp1, &tmp2, &kt, &two2);
+    if (tmp1.wrd[0] == 1 && tmp.siz == 1) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p);
     point_add(&ax, &ay, &ax, &ay, &ax, &ay, (bint*)p);
     brshift(&kt, &kt, 1);
   }
@@ -155,14 +146,14 @@ void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *
 
 //
 // Securely randomize arrays
-static inline void bintrnd_array(bint *r, int len) {
+void bintrnd_array(bint *r, int len) {
   FILE *f = fopen("/dev/urandom", "r");
   fread(r->wrd, sizeof(uint32_t), len, f);
   fclose(f);
 }
 
-void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
-  bint u = bcreate(), Vx = bcreate(), Vy = bcreate(), c = bcreate(), zero = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
+void sign(bint *sigx, bint *sigy, bint *pri, char *msg, bint u) {
+  bint Vx = bcreate(), Vy = bcreate(), c = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
   bint mc = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), d = bcreate(), hc = bcreate(), tmp = bcreate();
   str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
@@ -172,13 +163,10 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
   memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
   hash_shake_new(out1, 64, in1, strlen(msg));
   memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
-
-  wrd2bint(&zero, 0);
-  bintrnd_array(&u, 8);
   while (true) {
     point_mul(&Vx, &Vy, &CX, &CY, &u, &CP);
     bmod(&c, &tmp, &Vx, &CN);
-    if (cmp(&c, &zero) == 0) {
+    if (cmp(&c, &zero0) == 0) {
       continue;
     }
     inverse_mod(&mi, &u, &CN);
@@ -186,7 +174,7 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
     badd(&h, &hash1, &hc); // hash_msg + pri * c
     bmul(&mc, &mi, &h);
     bmod(&d, &tmp, &mc, &CN);
-    if (cmp(&d, &zero) == 0) {
+    if (cmp(&d, &zero0) == 0) {
       continue;
     }
     break;
@@ -196,7 +184,7 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
 }
 
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
-  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), zero = bcreate(), hash1 = bcreate(), tmp = bcreate();
+  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), hash1 = bcreate(), tmp = bcreate();
   bint h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
   bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
   str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
@@ -207,8 +195,6 @@ int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
   hash_shake_new(out1, 64, in1, strlen(msg));
   memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
-
-  wrd2bint(&zero, 0);
   inverse_mod(&h, sigy, &CN);
   bmul(&tmp, &hash1, &h);
   bmod(&h1, &tmp2, &tmp, &CN);
@@ -233,7 +219,6 @@ void genkeypair(bint *pubx, bint *puby, bint *sec) {
   str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
   str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
   str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
-  bintrnd_array(sec, 8); // private key
   scalar_mul(pubx, puby, sec, &CX, &CY, &CP, &CN); // public key
 }
 

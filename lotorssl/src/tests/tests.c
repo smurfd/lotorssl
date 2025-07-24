@@ -330,12 +330,11 @@ uint8_t tester_bint_sanity(void) {
 }
 
 uint8_t tester_bint_div_sanity(void) {
-  bint a = bcreate(), b = bcreate(), c = bcreate(), tmp = bcreate(), one = bcreate();
+  bint a = bcreate(), b = bcreate(), c = bcreate(), tmp = bcreate();
   str2bint(&a, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
   str2bint(&b, "0x9075b4ee4d4788cabb49f7f81c221151fa2f68914d0aa833388fa11ff621a970");
   bdiv(&c, &tmp, &a, &b);
-  wrd2bint(&one, 1);
-  assert(cmp(&c, &one) == 0);
+  assert(cmp(&c, &one1) == 0);
   return 1;
 }
 
@@ -392,17 +391,23 @@ uint8_t tester_bint_2ways_sanity(void) {
 }
 
 uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
-  bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bosk = bcreate(), bopkx = bcreate(), bopky = bcreate();
-  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
-  genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
-  genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
-  gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
-  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
+  bint u = bcreate(), alsk = bcreate();
+  clock_t start = clock();
+  for (int i = 0; i < 1000; i++) {
+    bintrnd_array(&u, 8); // private key
+    bintrnd_array(&alsk, 8);
+    bint alpkx = bcreate(), alpky = bcreate(), bosk = bcreate(), bopkx = bcreate(), bopky = bcreate();
+    bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
+    genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
+    genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
+    gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
+    gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
 
-  verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
-
-  sign(&sx, &sy, &bosk, "hellu wurld"); // Sign and verify
-  assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
+    verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
+    sign(&sx, &sy, &bosk, "hellu wurld", u); // Sign and verify
+    assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
+  }
+  printf("bint pk: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -449,7 +454,7 @@ int main(int argc, char** argv) {
       ret &= test_keyssign();
       ret &= test_keyssvrfy();
       ret &= test_keyswrite();
-      //ret &= test_keyssvrfyloop(); // Slow as fudge
+      ret &= test_keyssvrfyloop(); // Slow as fudge
     }
   }
   if (ret) printf("OK\n");
