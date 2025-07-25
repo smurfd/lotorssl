@@ -1,5 +1,6 @@
 // Auth: smurfd, 2025 More reading at the bottom of the file; 2 spacs indent; 150 width                                                             //
 // ------------------------------------------------------------------------------------------------------------------------------------------------ //
+#pragma once
 #ifndef BMEC_H
 #define BMEC_H
 #include <string.h>
@@ -12,15 +13,18 @@
 static bint zero0 = {.wrd[0] = 0, .siz = 1, .neg = 0, .cap = 1};
 static bint one1 = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};
 static bint two2 = {.wrd[0] = 2, .siz = 1, .neg = 0, .cap = 1};
+static bint ctmpA, ctmpB, ctmpH, ctmpN, ctmpP, ctmpX, ctmpY;
 
-void bintrnd_array(bint *r, int len);
-bint *inverse_mod(bint *ret, const bint *k, const bint *p);
-void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p);
-void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint *p0, const bint *p);
-void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n);
-void sign(bint *sigx, bint *sigy, bint *pri, char *msg, bint u);
+void sign(bint *sigx, bint *sigy, bint *pri, char *msg);
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy);
 void genkeypair(bint *pubx, bint *puby, bint *sec);
 void gensharedsecret(bint *shrx, bint *shry, bint *sec, bint *pubx, bint *puby);
 void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, bint *alsk, bint *bosk);
+#define curveA wrd2bint(&ctmpA, 0)
+#define curveB wrd2bint(&ctmpB, 7)
+#define curveH wrd2bint(&ctmpH, 1)
+#define curveP str2bint(&ctmpP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
+#define curveN str2bint(&ctmpN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+#define curveX str2bint(&ctmpX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798") // point gx
+#define curveY str2bint(&ctmpY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8") // point gy
 #endif

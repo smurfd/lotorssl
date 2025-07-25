@@ -12,65 +12,74 @@
 
 // TODO: document functions
 // TODO: struct point bint x, bint y?
-// TODO: struct for curve or curve consts
-bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
+
+//
+// Securely randomize arrays
+static inline void bintrnd_array(bint *r, int len) {
+  FILE *f = fopen("/dev/urandom", "r");
+  fread(r->wrd, sizeof(uint32_t), len, f);
+  fclose(f);
+}
+
+static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate();
   int16_t kz = cmp(k, &zero0);
   if (kz == 0) {
     return NULL;
   } else if (kz < 0 || k->neg == 1) {
-    bint ktmp = bcreate(), rtmp = bcreate();
+    bint ktmp = bcreate(), rtmp = bcreate(); // k ** -1 = p - (-k) ** -1  (mod p)
     BCPY(ktmp, *(bint*)k);
     ktmp.neg ^= 1;
     inverse_mod(&rtmp, &ktmp, p);
     bsub(ret, p, &rtmp);
-    return ret;
+    return ret; // p - inverse_mod(-k, p)
   }
   wrd2bint(&s, 0);
   wrd2bint(&ols, 1);
   wrd2bint(&t, 1);
   wrd2bint(&olt, 0);
   BCPY(r, *(bint*)p);
-  BCPY(olr, *(bint*)k);
+  BCPY(olr, *(bint*)k); // s = 0, old_s = 1, t = 1, old_t = 0, r = p, old_r = k
   bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate(), kx = bcreate();
   while (cmp(&r, &zero0) > 0) {
-    bdiv(&q, &tmp, &olr, &r);  // q = old_r // r
-    bmul(&qr, &q, &r); // qr = quot * r
-    bmul(&qs, &q, &s); // qs = quot * s
-    bmul(&qt, &q, &t); // qt = quot * t
-    bsub(&rr1, &olr, &qr); // r = old_r - (quot * r)
-    bsub(&ss1, &ols, &qs); // s = old_s - (quot * s)
-    bsub(&tt1, &olt, &qt); // t = old_t - (quot * t)
-    BSWP(r, olr); // r <-> old_r
-    BSWP(s, ols); // s <-> old_s
-    BSWP(t, olt); // t <-> old_t
-    BSWP(r, rr1); // r <-> old_r - (quot * r)
-    BSWP(s, ss1); // s <-> old_s - (quot * s)
-    BSWP(t, tt1); // t <-> old_t - (quot * t)
-  }
+    bdiv(&q, &tmp, &olr, &r); // q = old_r // r
+    bmul(&qr, &q, &r);        // qr = quot * r
+    bmul(&qs, &q, &s);        // qs = quot * s
+    bmul(&qt, &q, &t);        // qt = quot * t
+    bsub(&rr1, &olr, &qr);    // r = old_r - (quot * r)
+    bsub(&ss1, &ols, &qs);    // s = old_s - (quot * s)
+    bsub(&tt1, &olt, &qt);    // t = old_t - (quot * t)
+
+    BCPY(olr, r);             // old_r = r
+    BCPY(ols, s);             // old_s = s
+    BCPY(olt, t);             // old_t = t
+    BCPY(r, rr1);             // r = old_r - (quot * r)
+    BCPY(s, ss1);             // s = old_s - (quot * s)
+    BCPY(t, tt1);             // t = old_t - (quot * t)
+  } //  gcd, x, y = old_r, old_s, old_t
   assert(cmp(&olr, &one1) == 0); // assert g == 1
   bmul(&kx, k, &ols);
   bmod(ret, &tmp, &kx, p);
   assert(cmp(ret, &one1) == 0); // assert (k * x) % p == 1
   bmod(ret, &tmp, &ols, p);
-  return ret;
+  return ret; // return x % p
 }
 
-void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
+static inline void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, bint *p) {
   bint m = bcreate();
-  if (cmp(p1x, &zero0) == 0 && cmp(p1y, &zero0) == 0) {
+  if (cmp(p1x, &zero0) == 0 && cmp(p1y, &zero0) == 0) { // if point1 == 0, return point2
     BCPY(*(bint*)rx, *(bint*)p2x);
     BCPY(*(bint*)ry, *(bint*)p2y);
     return;
-  } else if (cmp(p2x, &zero0) == 0 && cmp(p2y, &zero0) == 0) {
+  } else if (cmp(p2x, &zero0) == 0 && cmp(p2y, &zero0) == 0) { // if point2 == 0, return point1
     BCPY(*(bint*)rx, *(bint*)p1x);
     BCPY(*(bint*)ry, *(bint*)p1y);
     return;
-  } else if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) {
+  } else if (cmp(p1x, p2x) == 0 && cmp(p1y, p2y) != 0) { // if x1 == x2 and y1 != y2, return 0, 0
     BCPY(*(bint*)rx, zero0);
     BCPY(*(bint*)ry, zero0);
     return;
-  } else if (cmp(p1x, p2x) == 0) {
+  } else if (cmp(p1x, p2x) == 0) { // if x1 == x2, m = (3 * x1 * x2 + curve.a) * inverse_mod(2 * y1, curve.p)
     bint xx = bcreate(), xxx = bcreate(), xxx2 = bcreate(), yy = bcreate(), iy = bcreate();
     badd(&xx, p1x, p1x);
     badd(&xxx, &xx, p1x);
@@ -78,7 +87,7 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
     badd(&yy, p1y, p1y);
     inverse_mod(&iy, &yy, p);
     bmul(&m, &iy, &xxx2);
-  } else {
+  } else { // m = (y1 - y2) * inverse_mod(x1 - x2, curve.p)
     bint xx1 = bcreate(), yy1 = bcreate(), ix = bcreate();
     bsub(&yy1, p1y, p2y);
     bsub(&xx1, p1x, p2x);
@@ -95,10 +104,10 @@ void point_add(bint *rx, bint *ry, bint *p1x, bint *p1y, bint *p2x, bint *p2y, b
   badd(&y3, p1y, &mmx3); // y3 = y1 + m * (x3 - 1)
   bmod(rx, &tmp, &x3, p);
   y3.neg ^= 1;
-  bmod(ry, &tmp, &y3, p);
+  bmod(ry, &tmp, &y3, p); // result = (x3 % curve.p, -y3 % curve.p)
 }
 
-void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint *p0, const bint *p) {
+static inline void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint *p0, const bint *p) {
   bint r0x = bcreate(), r0y = bcreate(), r1x = bcreate(), r1y = bcreate(), k = bcreate(), di = bcreate(), tmp = bcreate();
   bint dii = bcreate(), diim = bcreate(), kt = bcreate();
   BCPY(r1x, *(bint*)p1x);
@@ -118,16 +127,16 @@ void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1y, const bint 
   BCPY(*(bint*)ry, r0y);
 }
 
-void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
+static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
   bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), q = bcreate(), kt = bcreate(), zx = bcreate();
   bint tmp = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
   BCPY(kt, *(bint*)k);
   bmod(&q, &tmp, &kt, n);
-  if (cmp(&q, &zero0) == 0 || (cmp(p1x, &zero0) == 0 && cmp(p1y, &zero0) == 0)) {
+  if ((q.wrd[0] == 0 && q.siz == 1) || (p1x->wrd[0] == 0 && p1x->siz == 1) || (p1y->wrd[0] == 0 && p1y->siz == 1)) {
     BCPY(*(bint*)rx, zx);
     BCPY(*(bint*)ry, zx);
     return;
-  } else if (cmp(&kt, &zero0) < 0) {
+  } else if (kt.wrd[0] == 0 && kt.siz == 1) {
     kt.neg ^= 1;
     scalar_mul(rx, ry, &kt, p1x, p1y, p, n);
     return;
@@ -135,48 +144,33 @@ void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *
   BCPY(ax, *(bint*)p1x);
   BCPY(ay, *(bint*)p1y);
   while(cmp(&kt, &zero0) != 0) {
-    bmod(&tmp1, &tmp2, &kt, &two2);
-    if (tmp1.wrd[0] == 1 && tmp.siz == 1) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p);
-    point_add(&ax, &ay, &ax, &ay, &ax, &ay, (bint*)p);
+    bmod(&tmp1, &tmp2, &kt, &two2); // k & 1 is the same as k % 2
+    if (tmp1.wrd[0] == 1 && tmp.siz == 1) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p); // add to result
+    point_add(&ax, &ay, &ax, &ay, &ax, &ay, (bint*)p); // double
     brshift(&kt, &kt, 1);
   }
   BCPY(*(bint*)rx, rsx);
   BCPY(*(bint*)ry, rsy);
 }
 
-//
-// Securely randomize arrays
-void bintrnd_array(bint *r, int len) {
-  FILE *f = fopen("/dev/urandom", "r");
-  fread(r->wrd, sizeof(uint32_t), len, f);
-  fclose(f);
-}
-
-void sign(bint *sigx, bint *sigy, bint *pri, char *msg, bint u) {
-  bint Vx = bcreate(), Vy = bcreate(), c = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate();
-  bint mc = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), d = bcreate(), hc = bcreate(), tmp = bcreate();
-  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
-  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
+  bint Vx = bcreate(), Vy = bcreate(), c = bcreate(), mi = bcreate(), hash1 = bcreate(), h = bcreate(), mc = bcreate(), d = bcreate(), hc = bcreate();
+  bint u = bcreate(), tmp = bcreate();
   uint8_t in1[1024] = {0}, out1[512] = {0};
   memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
   hash_shake_new(out1, 64, in1, strlen(msg));
   memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
+  bintrnd_array(&u, 8);
   while (true) {
-    point_mul(&Vx, &Vy, &CX, &CY, &u, &CP);
-    bmod(&c, &tmp, &Vx, &CN);
-    if (cmp(&c, &zero0) == 0) {
-      continue;
-    }
-    inverse_mod(&mi, &u, &CN);
+    point_mul(&Vx, &Vy, curveX, curveY, &u, curveP);
+    bmod(&c, &tmp, &Vx, curveN);
+    if (cmp(&c, &zero0) == 0) continue;
+    inverse_mod(&mi, &u, curveN);
     bmul(&hc, pri, &c); // pri * c (pri == secret key)
     badd(&h, &hash1, &hc); // hash_msg + pri * c
     bmul(&mc, &mi, &h);
-    bmod(&d, &tmp, &mc, &CN);
-    if (cmp(&d, &zero0) == 0) {
-      continue;
-    }
+    bmod(&d, &tmp, &mc, curveN);
+    if (cmp(&d, &zero0) == 0) continue;
     break;
   }
   BCPY(*(bint*)sigx, c);
@@ -184,61 +178,38 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg, bint u) {
 }
 
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
-  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), hash1 = bcreate(), tmp = bcreate();
-  bint h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
+  bint hash1 = bcreate(), tmp = bcreate(), h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
   bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
-  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
-  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
   uint8_t in1[1024] = {0}, out1[512] = {0};
   memcpy(in1, msg, strlen(msg) * sizeof(uint8_t));
   hash_shake_new(out1, 64, in1, strlen(msg));
   memcpy(hash1.wrd, out1, 64 * sizeof(uint8_t));
-  inverse_mod(&h, sigy, &CN);
+  inverse_mod(&h, sigy, curveN);
   bmul(&tmp, &hash1, &h);
-  bmod(&h1, &tmp2, &tmp, &CN);
-
-  wrd2bint(&tmp, 0);
-  wrd2bint(&tmp2, 0);
+  bmod(&h1, &tmp2, &tmp, curveN);
   bmul(&tmp, sigx, &h);
-  bmod(&h2, &tmp2, &tmp, &CN);
-  scalar_mul(&h1x, &h1y, &h1, &CX, &CY, &CP, &CN);
-  scalar_mul(&h2x, &h2y, &h2, pubx, puby, &CP, &CN);
-  point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, &CP);
-  bmod(&c1, &tmp2, &Px, &CN);
+  bmod(&h2, &tmp2, &tmp, curveN);
+  scalar_mul(&h1x, &h1y, &h1, curveX, curveY, curveP, curveN);
+  scalar_mul(&h2x, &h2y, &h2, pubx, puby, curveP, curveN);
+  point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, curveP);
+  bmod(&c1, &tmp2, &Px, curveN);
   return cmp(&c1, sigx) == 0; // c1 == c?
 }
 
 void genkeypair(bint *pubx, bint *puby, bint *sec) {
-  bint CA = bcreate(), CB = bcreate(), CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), CH = bcreate();
-  wrd2bint(&CA, 0); // Curve parameters
-  wrd2bint(&CB, 7);
-  wrd2bint(&CH, 1);
-  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
-  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
-  bintrnd_array(sec, 8);
-  scalar_mul(pubx, puby, sec, &CX, &CY, &CP, &CN); // public key
+  bintrnd_array(sec, 8); // private key
+  scalar_mul(pubx, puby, sec, curveX, curveY, curveP, curveN); // public key
 }
 
 void gensharedsecret(bint *shrx, bint *shry, bint *sec, bint *pubx, bint *puby) {
-  bint CP = bcreate(), CN = bcreate();
-  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  scalar_mul(shrx, shry, sec, pubx, puby, &CP, &CN);
+  scalar_mul(shrx, shry, sec, pubx, puby, curveP, curveN);
 }
 
 void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, bint *alsk, bint *bosk) {
-  bint CP = bcreate(), CN = bcreate(), CX = bcreate(), CY = bcreate(), tmp1 = bcreate(), tmp2 = bcreate(), res1 = bcreate(), r1 = bcreate(), r2 = bcreate();
-  str2bint(&CP, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
-  str2bint(&CN, "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-  str2bint(&CX, "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"); // point gx
-  str2bint(&CY, "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"); // point gy
+  bint tmp1 = bcreate(), tmp2 = bcreate(), res1 = bcreate(), r1 = bcreate(), r2 = bcreate();
   assert(cmp(alshrx, boshrx) == 0 && cmp(alshry, boshry) == 0); // assert alices shared secret is the same as bobs shared secret
   bmul(&res1, alsk, bosk); // alice's and bob's secret
-  bmod(&tmp1, &tmp2, &res1, &CN);
-  scalar_mul(&r1, &r2, &tmp1, &CX, &CY, &CP, &CN); // scale with curve G
+  bmod(&tmp1, &tmp2, &res1, curveN);
+  scalar_mul(&r1, &r2, &tmp1, curveX, curveY, curveP, curveN); // scale with curve G
   assert(cmp(&r1, alshrx) == 0); // assert alices shared x is same as ((alicesecret * bobsecret) % N) scalar mult by curve G
 }

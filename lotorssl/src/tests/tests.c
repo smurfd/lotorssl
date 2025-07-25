@@ -391,22 +391,25 @@ uint8_t tester_bint_2ways_sanity(void) {
 }
 
 uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
-  bint u = bcreate(), alsk = bcreate(), bosk = bcreate();
+  bint alsk = bcreate(), bosk = bcreate();
   clock_t start = clock();
-  bintrnd_array(&u, 8);
   for (int i = 0; i < 1000; i++) {
     bint alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
     bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
     genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
     genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
+
     gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
     gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
     verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
-    sign(&sx, &sy, &bosk, "hellu wurld", u); // Sign and verify
+    sign(&sx, &sy, &bosk, "hellu wurld"); // Sign and verify
     assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
   }
   printf("bint pk: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
+  // bint pk: Time 137s 92ms
+  // bint pk: Time 136s 901ms
+  // bint pk: Time 135s 94ms (35s without sign and verify: TODO Look into those)
 }
 
 int main(int argc, char** argv) {
