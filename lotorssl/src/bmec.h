@@ -20,6 +20,7 @@ int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy);
 void genkeypair(bint *pubx, bint *puby, bint *sec);
 void gensharedsecret(bint *shrx, bint *shry, bint *sec, bint *pubx, bint *puby);
 void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, bint *alsk, bint *bosk);
+#define B2CPY(r1, r2, a1, a2) {r1 = a1; r2 = a2;}
 #define curveA wrd2bint(&ctmpA, 0)
 #define curveB wrd2bint(&ctmpB, 7)
 #define curveH wrd2bint(&ctmpH, 1)
