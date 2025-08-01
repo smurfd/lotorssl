@@ -410,6 +410,7 @@ uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
   // bint pk: Time 137s 92ms
   // bint pk: Time 136s 901ms
   // bint pk: Time 135s 94ms (35s without sign and verify: TODO Look into those)
+  // bint pk: Time 133s 505ms
 }
 
 int main(int argc, char** argv) {

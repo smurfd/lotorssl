@@ -10,6 +10,8 @@
 #include "bmec.h"
 #include "hash.h"
 
+#define MAM(di, dii, diim, tmp, kt, one1, two2) {bmod(di, tmp, kt, two2); badd(dii, di, one1); bmod(diim, tmp, dii, two2);}
+#define MULMOD(tmp, tmp2, hash1, h, h1, curveN) {bmul(tmp, hash1, h); bmod(h1, tmp2, tmp, curveN);}
 // TODO: document functions
 // TODO: struct point bint x, bint y?
 
@@ -41,21 +43,19 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   B2CPY(r, olr, *(bint*)p, *(bint*)k) // s = 0, old_s = 1, t = 1, old_t = 0, r = p, old_r = k
   bint tmp = bcreate(), q = bcreate(), qr = bcreate(), qs = bcreate(), qt = bcreate(), rr1 = bcreate(), ss1 = bcreate(), tt1 = bcreate(), kx = bcreate();
   while (cmp(&r, &zero0) > 0) {
-    bdiv(&q, &tmp, &olr, &r); // q = old_r // r
-    bmul(&qr, &q, &r);        // qr = quot * r
-    bmul(&qs, &q, &s);        // qs = quot * s
-    bmul(&qt, &q, &t);        // qt = quot * t
-    bsub(&rr1, &olr, &qr);    // r = old_r - (quot * r)
-    bsub(&ss1, &ols, &qs);    // s = old_s - (quot * s)
-    bsub(&tt1, &olt, &qt);    // t = old_t - (quot * t)
+    bdiv(&q, &tmp, &olr, &r);       // q = old_r // r
+    GCDMR(&rr1, &qr, &q, &r, &olr); // qr = quot * r, r = old_r - (quot * r)
+    GCDMR(&ss1, &qs, &q, &s, &ols); // qs = quot * s, s = old_s - (quot * s)
+    GCDMR(&tt1, &qt, &q, &t, &olt); // qt = quot * t, t = old_t - (quot * t)
 
-    B2CPY(olr, r, r, rr1);    // old_r, r = r, old_r - (quot * r)
-    B2CPY(ols, s, s, ss1);    // old_s, s = s, old_s - (quot * s)
-    B2CPY(olt, t, t, tt1);    // old_t, t = t, old_t - (quot * t)
-  }                           // gcd, x, y = old_r, old_s, old_t
+    B2CPY(olr, r, r, rr1);          // old_r, r = r, old_r - (quot * r)
+    B2CPY(ols, s, s, ss1);          // old_s, s = s, old_s - (quot * s)
+    B2CPY(olt, t, t, tt1);          // old_t, t = t, old_t - (quot * t)
+  }                                 // gcd, x, y = old_r, old_s, old_t
   assert(olr.wrd[0] == 1 && olr.siz == 1);
-  bmul(&kx, k, &ols);
-  bmod(ret, &tmp, &kx, p);
+  MULMOD(&kx, &tmp, k, &ols, ret, p);
+  //bmul(&kx, k, &ols);
+  //bmod(ret, &tmp, &kx, p);
   assert(ret->wrd[0] == 1 && ret->siz == 1);
   bmod(ret, &tmp, &ols, p);
   return ret; // return x % p
@@ -106,19 +106,35 @@ static inline void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1
   bint dii = bcreate(), diim = bcreate(), kt = bcreate();
   B2CPY(r1x, r1y, *(bint*)p1x, *(bint*)p1y);
   BCPY(k, *(bint*)p0);
-  for (int i = bbitlen(p0) - 1; i >= 0; i--) {
+  int16_t bl = bbitlen(p0);
+  for (int i = bl - 1; i > bl - (bl % 4) - 1; i--) {
     brshift(&kt, &k, i);
-    bmod(&di, &tmp, &kt, &two2);
-    badd(&dii, &di, &one1);
-    bmod(&diim, &tmp, &dii, &two2);
-    if (diim.wrd[0]) point_add(&r1x, &r1y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
-    else point_add(&r0x, &r0y, &r0x, &r0y, &r1x, &r1y, (bint*)p);
-    if (di.wrd[0]) point_add(&r1x, &r1y, &r1x, &r1y, &r1x, &r1y, (bint*)p);
-    else point_add(&r0x, &r0y, &r0x, &r0y, &r0x, &r0y, (bint*)p);
+    MAM(&di, &dii, &diim, &tmp, &kt, &one1, &two2);
+    PA(diim.wrd[0], di.wrd[0], &r0x, &r0y, &r1x, &r1y, (bint*)p);
+  }
+  for (int i = bl - (bl % 4) - 1; i >= 0; i-=4) {
+    brshift(&kt, &k, i);
+    MAM(&di, &dii, &diim, &tmp, &kt, &one1, &two2);
+    PA(diim.wrd[0], di.wrd[0], &r0x, &r0y, &r1x, &r1y, (bint*)p);
+
+    brshift(&kt, &k, i-1);
+    MAM(&di, &dii, &diim, &tmp, &kt, &one1, &two2);
+    PA(diim.wrd[0], di.wrd[0], &r0x, &r0y, &r1x, &r1y, (bint*)p);
+
+    brshift(&kt, &k, i-2);
+    MAM(&di, &dii, &diim, &tmp, &kt, &one1, &two2);
+    PA(diim.wrd[0], di.wrd[0], &r0x, &r0y, &r1x, &r1y, (bint*)p);
+
+    brshift(&kt, &k, i-3);
+    MAM(&di, &dii, &diim, &tmp, &kt, &one1, &two2);
+    PA(diim.wrd[0], di.wrd[0], &r0x, &r0y, &r1x, &r1y, (bint*)p);
   }
   B2CPY(*(bint*)rx, *(bint*)ry, r0x, r0y);
 }
 
+// k & 1 is the same as k % 2. If (k & 1) add to result, otherwise double
+#define MPAPA(tmp1, tmp2, kt, two2, rsx, rsy, ax, ay, p, tw, ts) {bmod(tmp1, tmp2, kt, two2); if (tw == 1 && ts == 1) point_add(rsx, rsy, rsx, rsy, ax, ay, p);\
+point_add(ax, ay, ax, ay, ax, ay, p);}
 static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
   bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), q = bcreate(), kt = bcreate(), zx = bcreate();
   bint tmp = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
@@ -133,10 +149,8 @@ static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x
     return;
   }
   B2CPY(ax, ay, *(bint*)p1x, *(bint*)p1y);
-  while(cmp(&kt, &zero0) != 0) {
-    bmod(&tmp1, &tmp2, &kt, &two2); // k & 1 is the same as k % 2
-    if (tmp1.wrd[0] == 1 && tmp.siz == 1) point_add(&rsx, &rsy, &rsx, &rsy, &ax, &ay, (bint*)p); // add to result
-    point_add(&ax, &ay, &ax, &ay, &ax, &ay, (bint*)p); // double
+  for (int i = bbitlen(k) - 1; i >= 0; i--) {
+    MPAPA(&tmp1, &tmp1, &kt, &two2, &rsx, &rsy, &ax, &ay, (bint*)p, tmp1.wrd[0], tmp.siz);
     brshift(&kt, &kt, 1);
   }
   B2CPY(*(bint*)rx, *(bint*)ry, rsx, rsy);
@@ -154,25 +168,33 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
     inverse_mod(&mi, &u, curveN);
     bmul(&hc, pri, &c); // pri * c (pri == secret key)
     badd(&h, &hash1, &hc); // hash_msg + pri * c
-    bmul(&mc, &mi, &h);
-    bmod(&d, &tmp, &mc, curveN);
+    MULMOD(&mc, &tmp, &mi, &h, &d, curveN);
+//    bmul(&mc, &mi, &h);
+//    bmod(&d, &tmp, &mc, curveN);
     if (memcmp(&d, &zero0, sizeof(bint)) == 0) continue;
     break;
   }
   B2CPY(*(bint*)sigx, *(bint*)sigy, c, d);
 }
 
+#define SMSM(h1x, h1y, h2x, h2y, h1, h2, curveX, curveY, pubx, puby, curveP, curveN) {scalar_mul(h1x, h1y, h1, curveX, curveY, curveP, curveN);\
+scalar_mul(h2x, h2y, h2, pubx, puby, curveP, curveN);}
+
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   bint hash1 = bcreate(), tmp = bcreate(), h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();
   bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
   hash_shake_new((uint8_t*)hash1.wrd, 64, (uint8_t*)msg, strlen(msg));
   inverse_mod(&h, sigy, curveN);
-  bmul(&tmp, &hash1, &h);
-  bmod(&h1, &tmp2, &tmp, curveN);
-  bmul(&tmp, sigx, &h);
-  bmod(&h2, &tmp2, &tmp, curveN);
-  scalar_mul(&h1x, &h1y, &h1, curveX, curveY, curveP, curveN);
-  scalar_mul(&h2x, &h2y, &h2, pubx, puby, curveP, curveN);
+  MULMOD(&tmp, &tmp2, &hash1, &h, &h1, curveN);
+//  bmul(&tmp, &hash1, &h);
+//  bmod(&h1, &tmp2, &tmp, curveN);
+  MULMOD(&tmp, &tmp2, sigx, &h, &h2, curveN);
+//  bmul(&tmp, sigx, &h);
+//  bmod(&h2, &tmp2, &tmp, curveN);
+
+//  scalar_mul(&h1x, &h1y, &h1, curveX, curveY, curveP, curveN);
+//  scalar_mul(&h2x, &h2y, &h2, pubx, puby, curveP, curveN);
+  SMSM(&h1x, &h1y, &h2x, &h2y, &h1, &h2, curveX, curveY, pubx, puby, curveP, curveN);
   point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, curveP);
   bmod(&c1, &tmp2, &Px, curveN);
   return memcmp(&c1, sigx, sizeof(bint)) == 0; // c1 == c?
