@@ -137,7 +137,7 @@ static inline void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1
 point_add(ax, ay, ax, ay, ax, ay, p);}
 static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
   bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), q = bcreate(), kt = bcreate(), zx = bcreate();
-  bint tmp = bcreate(), tmp1 = bcreate(), tmp2 = bcreate();
+  bint tmp = bcreate(), tmp1 = bcreate();
   BCPY(kt, *(bint*)k);
   bmod(&q, &tmp, &kt, n);
   if ((q.wrd[0] == 0 && q.siz == 1) || (p1x->wrd[0] == 0 && p1x->siz == 1) || (p1y->wrd[0] == 0 && p1y->siz == 1)) {

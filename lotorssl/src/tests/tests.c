@@ -392,6 +392,20 @@ uint8_t tester_bint_2ways_sanity(void) {
 
 uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
   bint alsk = bcreate(), bosk = bcreate();
+  bint alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
+  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
+  genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
+  genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
+  gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
+  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
+  verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
+  sign(&sx, &sy, &bosk, "hellu wurld"); // Sign and verify
+  assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
+  return 1;
+}
+
+uint8_t tester_bint_PK_loop(void) { // TODO: check if the point is on curve
+  bint alsk = bcreate(), bosk = bcreate();
   clock_t start = clock();
   for (int i = 0; i < 1000; i++) {
     bint alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
@@ -412,7 +426,6 @@ uint8_t tester_bint_PK(void) { // TODO: check if the point is on curve
   // bint pk: Time 135s 94ms (35s without sign and verify: TODO Look into those)
   // bint pk: Time 133s 505ms
 }
-
 int main(int argc, char** argv) {
   int ret = 1;
   if (argc == 1) { // When run without arguments
@@ -457,6 +470,7 @@ int main(int argc, char** argv) {
       ret &= test_keyssvrfy();
       ret &= test_keyswrite();
       ret &= test_keyssvrfyloop(); // Slow as fudge
+      ret &= tester_bint_PK_loop();
     }
   }
   if (ret) printf("OK\n");
