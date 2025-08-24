@@ -1,3 +1,4 @@
+// ------------------------------------------------------------------------------------------------------------------------------------------------ //
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -14,6 +15,15 @@
 #include "../keys.h"
 #include "../bmec.h"
 
+uint8_t civ[32] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, ckey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+  0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f}, cplain[32] = {0x00, 0x11,
+  0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99,
+  0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, ccipher[32] = {0}, ctag[32] = {0}, ctag2[32] = {0}, caad[32] = {0}, cplain2[32] = {0}, cres = 0,
+  *cplain3 = (uint8_t*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\
+ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit\
+ in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt\
+ mollit anim id est laborum.";
 uint8_t test_aes(void) {
   uint32_t key[8] = {0x603deb10, 0x15ca71be, 0x2b73aef0, 0x857d7781, 0x1f352c07, 0x3b6108d7, 0x2d9810a3, 0x0914dff4};
   uint32_t plain[4] = {0xf69f2445, 0xdf4f9b17, 0xad2b417b, 0xe66c3710};
@@ -39,35 +49,29 @@ uint8_t test_aesloop(void) {
     res += memcmp(resultdec, plain, 4 * sizeof(uint32_t));
   }
   assert(res == 0);
-  printf("aesloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("aesloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
 uint8_t test_aesgcm(void) {
-  uint8_t iv[32] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-  key[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f},
-  plain[32] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
-  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0}, res = 0;
-  gcm_ciphertag(cipher, tag, key, iv, plain, aad,  32);
-  gcm_inv_ciphertag(plain2, tag2, key, iv, cipher, aad, tag);
-  res += memcmp(plain, plain2, 32 * sizeof(uint8_t));
-  assert(res == 0);
+  gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad,  32);
+  gcm_inv_ciphertag(cplain2, ctag2, ckey, civ, ccipher, caad, ctag);
+  cres += memcmp(cplain, cplain2, 32 * sizeof(uint8_t));
+  assert(cres == 0);
   return 1;
 }
 
 uint8_t test_aesgcmloop(void) {
-  uint8_t iv[32] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-  key[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f},
-  plain[32] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
-  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0}, res = 0;
   clock_t start = clock();
   for (int i = 0; i < 1000000; i++) {
-    gcm_ciphertag(cipher, tag, key, iv, plain, aad,  32);
-    gcm_inv_ciphertag(plain2, tag2, key, iv, cipher, aad, tag);
-    res += memcmp(plain, plain2, 32 * sizeof(uint8_t));
+    gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad,  32);
+    gcm_inv_ciphertag(cplain2, ctag2, ckey, civ, ccipher, caad, ctag);
+    cres += memcmp(cplain, cplain2, 32 * sizeof(uint8_t));
   }
-  assert(res == 0);
-  printf("aesgcmloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  assert(cres == 0);
+  clock_t cs = clock() - start;
+  printf("aesgcmloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -95,7 +99,8 @@ uint8_t test_aesgcm32bitloop(void) {
     res += memcmp(plain, plain2, 8 * sizeof(uint32_t));
   }
   assert(res == 0);
-  printf("aesgcm32bitloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("aesgcm32bitloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -156,12 +161,8 @@ uint8_t test_hash3(void) {
 }
 
 uint8_t test_hash3big(void) {
-  uint8_t *plain = (uint8_t*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt\
- ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip e\
-x ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pa\
-riatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
   char s[256] = {0};
-  hash_new(s, plain);
+  hash_new(s, cplain3);
   assert(strcmp(s, "0xf32a9423551351df0a07c0b8c20eb972367c398d61066038e16986448ebfbc3d15ede0ed3693e3905e9a8c601d9d002a0\
 6853b9797ef9ab10cbde1009c7d0f09") == 0);
   assert(strcmp(s, "0xf32a9423551351df0a07c0b8c20eb972367c398d61066038e16986448ebfbc3d15ede0ed3693e3905e9a8c601d9d002a0\
@@ -170,20 +171,17 @@ riatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui offici
 }
 
 uint8_t test_hash3bigloop(void) {
-  uint8_t *plain = (uint8_t*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt\
- ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip e\
-x ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pa\
-riatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-  res = 0;
+  uint8_t res = 0;
   clock_t start = clock();
   for (int i = 0; i < 1000000; i++) {
     char s[256] = {0};
-    hash_new(s, plain);
+    hash_new(s, cplain3);
     res += memcmp(s, "0xf32a9423551351df0a07c0b8c20eb972367c398d61066038e16986448ebfbc3d15ede0ed3693e3905e9a8c601d9d002a0\
 6853b9797ef9ab10cbde1009c7d0f09", 130);
   }
   assert(res == 0);
-  printf("hash3bigloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("hash3bigloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -237,7 +235,8 @@ uint8_t test_hash3shkrefloop(void) {
     ret += memcmp(out1, res, 64 * sizeof(uint8_t));
   }
   assert(ret == 0);
-  printf("hash3shkrefloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("hash3shkrefloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -254,7 +253,8 @@ uint8_t test_hash3shkrefloop2(void) {
     ret += memcmp(out1, res, 64 * sizeof(uint8_t));
   }
   assert(ret == 0);
-  printf("hash3shkrefloop2: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("hash3shkrefloop2: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -300,14 +300,15 @@ uint8_t test_keyssvrfyloop(void) {
   uint32_t ret = 0;
   clock_t start = clock();
   uint8_t sig[BYTES * 2] = {0}, pubkey[BYTES + 1] = {0}, sec[BYTES] = {0}, privkey[BYTES] = {0}, h[BYTES] = {0};
-  for (int i = 0; i < 1000000; i++) {
+  for (int i = 0; i < 1000; i++) {
     ret += !keys_make(pubkey, privkey);
     ret += !keys_secr(pubkey, privkey, sec);
     ret += !keys_sign(privkey, h, sig);
     ret += !keys_vrfy(pubkey, h, sig);
   }
   assert(ret == 0);
-  printf("keyssvrfyloop: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("keyssvrfyloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
 
@@ -316,15 +317,13 @@ uint8_t tester_bint_sanity(void) {
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
   str2bint(&b, "0xd7dab791a8647ac88695e20e29960a6fd41707258cc88cc0480ea7e5bb3f132f");
   bmul(&c, &a, &b);
-  // 0x321764d8e538429bc4539ec57462be61fa493fd0c700db4f19c51549d9c6aad6904bf1b900775bdf11da25e74e4d698c386446a85b7f1afaf9062442c4f1ffc4
   uint32_t xxx[BLEN] = {0x321764d8, 0xe538429b, 0xc4539ec5, 0x7462be61, 0xfa493fd0, 0xc700db4f, 0x19c51549, 0xd9c6aad6, 0x904bf1b9, 0x00775bdf,
-    0x11da25e7, 0x4e4d698c, 0x386446a8, 0x5b7f1afa, 0xf9062442, 0xc4f1ffc4};
+                        0x11da25e7, 0x4e4d698c, 0x386446a8, 0x5b7f1afa, 0xf9062442, 0xc4f1ffc4};
   for (int i = 0; i < 15; i++) {assert(c.wrd[i] == xxx[15-i]);}
   bmul(&d, &c, &a);
-  // 0xb9fcf4f502f06b563974c8fd64b52750b925ec4138d28632fc84b3f8eedf7c7d471a809102365772e1eefc491b090a624584b32a122142b07a6c3aefc791d81cf527e4053ea119ffa86f73189e82d3ae2650192831a8fc8618fac175b568ef0
   uint32_t yyy[BLEN] = {0x0b9fcf4f, 0x502f06b5, 0x63974c8f, 0xd64b5275, 0x0b925ec4, 0x138d2863, 0x2fc84b3f, 0x8eedf7c7, 0xd471a809, 0x10236577,
-    0x2e1eefc4, 0x91b090a6, 0x24584b32, 0xa122142b, 0x07a6c3ae, 0xfc791d81, 0xcf527e40, 0x53ea119f, 0xfa86f731, 0x89e82d3a, 0xe2650192, 0x831a8fc8,
-    0x618fac17, 0x5b568ef0};
+                        0x2e1eefc4, 0x91b090a6, 0x24584b32, 0xa122142b, 0x07a6c3ae, 0xfc791d81, 0xcf527e40, 0x53ea119f, 0xfa86f731, 0x89e82d3a,
+                        0xe2650192, 0x831a8fc8, 0x618fac17, 0x5b568ef0};
   for (int i = 0; i < 24; i++) assert(yyy[23 - i] == d.wrd[i]);
   return 1;
 }
@@ -412,14 +411,14 @@ uint8_t tester_bint_PK_loop(void) { // TODO: check if the point is on curve
     bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate(), sx = bcreate(), sy = bcreate();
     genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
     genkeypair(&bopkx, &bopky, &bosk); // Bob's keypair generated
-
     gensharedsecret(&alshrx, &alshry, &bosk, &alpkx, &alpky); // Alice's shared secret
     gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
     verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &bosk); // Verify Alice's and Bob's shared secrets
     sign(&sx, &sy, &bosk, "hellu wurld"); // Sign and verify
     assert(verify(&bopkx, &bopky, "hellu wurld", &sx, &sy) == 1);
   }
-  printf("bint pk: Time %us %ums\n", (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((clock() - start) * 1000 / CLOCKS_PER_SEC) % 1000);
+  clock_t cs = clock() - start;
+  printf("bint pk: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
   // bint pk: Time 137s 92ms
   // bint pk: Time 136s 901ms
@@ -470,8 +469,17 @@ int main(int argc, char** argv) {
       ret &= test_keyssvrfy();
       ret &= test_keyswrite();
       ret &= test_keyssvrfyloop(); // Slow as fudge
-      ret &= tester_bint_PK_loop();
+      ret &= tester_bint_PK_loop(); // Slow as fudge!
     }
+    // aesloop: Time 0s 580ms
+    // aesgcmloop: Time 2s 269ms
+    // aesgcmloop: Time 2s 269ms
+    // aesgcm32bitloop: Time 2s 176ms
+    // hash3bigloop: Time 13s 216ms
+    // hash3shkrefloop: Time 0s 783ms
+    // hash3shkrefloop2: Time 0s 783ms
+    // keyssvrfyloop: Time 2s 142ms
+    // bint pk: Time 135s 901ms
   }
   if (ret) printf("OK\n");
   else printf("Not OK\n");

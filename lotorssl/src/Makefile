@@ -3,7 +3,7 @@ BUILD := .build
 SUBMODULES := lotormath
 
 all: mkbuilddir checksubmodules cryp hash keys ciph ec test
-local: mkbuilddir checksubmodules cryp hash keys ciph test_local
+local: mkbuilddir checksubmodules cryp hash keys ciph ec test_local
 
 mkbuilddir:
 	mkdir -p ${BUILD}

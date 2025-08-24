@@ -53,9 +53,7 @@ static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
     B2CPY(olt, t, t, tt1);          // old_t, t = t, old_t - (quot * t)
   }                                 // gcd, x, y = old_r, old_s, old_t
   assert(olr.wrd[0] == 1 && olr.siz == 1);
-  MULMOD(&kx, &tmp, k, &ols, ret, p);
-  //bmul(&kx, k, &ols);
-  //bmod(ret, &tmp, &kx, p);
+  MULMOD(&kx, &tmp, k, &ols, ret, p); //bmul(&kx, k, &ols); bmod(ret, &tmp, &kx, p);
   assert(ret->wrd[0] == 1 && ret->siz == 1);
   bmod(ret, &tmp, &ols, p);
   return ret; // return x % p
@@ -168,9 +166,7 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
     inverse_mod(&mi, &u, curveN);
     bmul(&hc, pri, &c); // pri * c (pri == secret key)
     badd(&h, &hash1, &hc); // hash_msg + pri * c
-    MULMOD(&mc, &tmp, &mi, &h, &d, curveN);
-//    bmul(&mc, &mi, &h);
-//    bmod(&d, &tmp, &mc, curveN);
+    MULMOD(&mc, &tmp, &mi, &h, &d, curveN); // bmul(&mc, &mi, &h); bmod(&d, &tmp, &mc, curveN);
     if (memcmp(&d, &zero0, sizeof(bint)) == 0) continue;
     break;
   }
@@ -185,16 +181,9 @@ int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   bint Px = bcreate(), Py = bcreate(), c1 = bcreate(), tmp2 = bcreate();
   hash_shake_new((uint8_t*)hash1.wrd, 64, (uint8_t*)msg, strlen(msg));
   inverse_mod(&h, sigy, curveN);
-  MULMOD(&tmp, &tmp2, &hash1, &h, &h1, curveN);
-//  bmul(&tmp, &hash1, &h);
-//  bmod(&h1, &tmp2, &tmp, curveN);
-  MULMOD(&tmp, &tmp2, sigx, &h, &h2, curveN);
-//  bmul(&tmp, sigx, &h);
-//  bmod(&h2, &tmp2, &tmp, curveN);
-
-//  scalar_mul(&h1x, &h1y, &h1, curveX, curveY, curveP, curveN);
-//  scalar_mul(&h2x, &h2y, &h2, pubx, puby, curveP, curveN);
-  SMSM(&h1x, &h1y, &h2x, &h2y, &h1, &h2, curveX, curveY, pubx, puby, curveP, curveN);
+  MULMOD(&tmp, &tmp2, &hash1, &h, &h1, curveN); // bmul(&tmp, &hash1, &h); bmod(&h1, &tmp2, &tmp, curveN);
+  MULMOD(&tmp, &tmp2, sigx, &h, &h2, curveN); // bmul(&tmp, sigx, &h); bmod(&h2, &tmp2, &tmp, curveN);
+  SMSM(&h1x, &h1y, &h2x, &h2y, &h1, &h2, curveX, curveY, pubx, puby, curveP, curveN); // scalar_mul(&h1x, &h1y, &h1, curveX, curveY, curveP, curveN); scalar_mul(&h2x, &h2y, &h2, pubx, puby, curveP, curveN);
   point_add(&Px, &Py, &h1x, &h1y, &h2x, &h2y, curveP);
   bmod(&c1, &tmp2, &Px, curveN);
   return memcmp(&c1, sigx, sizeof(bint)) == 0; // c1 == c?

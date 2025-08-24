@@ -3,11 +3,10 @@
 #define CIPH_H 1
 #include <stdint.h>
 #define KEYSIZE1 sizeof(uint32_t) * 4
-#define KEYSIZE2 sizeof(uint32_t) * 8
 #define u64 unsigned long long int // because linux uint64_t is not same as on mac
-#define MAXPLAIN 68719476704 // (2 ^ 39) - 256
-#define MAXAAD 2305843009213693952 // (2 ^ 64) - 1
-#define MAXIV 2305843009213693952 // (2 ^ 64) - 1
+#define MAXPLAIN 0x7fffffff00      // (2 ^ 39) - 256
+#define MAXAAD 0xffffffffffffffff  // (2 ^ 64) - 1
+#define MAXIV 0xffffffffffffffff   // (2 ^ 64) - 1
 // AES
 void cipher(uint32_t *ret, const uint32_t *key, const uint32_t *block);
 void inv_cipher(uint32_t *ret, const uint32_t *key, const uint32_t *block);
