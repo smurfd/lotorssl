@@ -479,7 +479,7 @@ int main(int argc, char** argv) {
     // hash3shkrefloop: Time 0s 783ms
     // hash3shkrefloop2: Time 0s 783ms
     // keyssvrfyloop: Time 2s 142ms
-    // bint pk: Time 135s 901ms
+    // bint pk: Time 127s 149ms
   }
   if (ret) printf("OK\n");
   else printf("Not OK\n");
