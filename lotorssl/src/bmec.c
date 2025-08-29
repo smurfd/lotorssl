@@ -200,3 +200,17 @@ void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, 
   scalar_mul(&r1, &r2, &tmp1, curveX, curveY, curveP, curveN); // scale with curve G
   assert(memcmp(&r1, alshrx, sizeof(bint)) == 0);
 }
+
+// ECDSA
+// https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+// https://www.rfc-editor.org/rfc/rfc6979
+// https://www.rfc-editor.org/rfc/rfc4050
+
+// http://www.secg.org/sec2-v2.pdf
+// http://csrc.nist.gov/publications/fips/fips186-3/fips_186-3.pdf
+// https://www.ietf.org/rfc/rfc4492.txt
+
+// https://csrc.nist.gov/csrc/media/publications/fips/186/3/archive/2009-06-25/documents/fips_186-3.pdf
+// https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
+// https://www.ietf.org/rfc/rfc4492.txt
+

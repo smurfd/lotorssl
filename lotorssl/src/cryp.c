@@ -14,11 +14,59 @@
 #include "definitions.h"
 #include "cryp.h"
 
+// Static variables
+static char enc[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+  'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+  's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
 static uint8_t AA[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x06,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x06};
 static uint8_t AB[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01};
 static uint8_t AC[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01, 0x02};
 static uint8_t AD[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01 ,0x2a};
 static uint8_t AE[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x03, 0x02 ,0x30};
+
+
+static uint32_t oct(int i, int inl, const uint8_t d[]) {
+  if (i < inl) return d[i];
+  return 0;
+}
+
+static uint32_t sex(const char d[], char c[], int i) {
+  if (d[i] == '=') return (0 & i++);
+  return c[(int)d[i]];
+}
+
+//
+// Base64 encoder
+int base64enc(char ed[], const uint8_t *data, int inl) {
+  int tab[] = {0, 2, 1}, ol = 4 * ((inl + 2) / 3);
+  for (int i = 0, j = 0; i < inl;) {
+    uint32_t a = oct(i++, inl, data), b = oct(i++, inl, data), c = oct(i++, inl, data),tri = (a << 0x10)+(b << 0x08) + c;
+    for (int k = 3; k >=0; k--)
+      ed[j++] = enc[(tri >> k * 6) & 0x3f];
+  }
+  for (int i = 0; i < tab[inl % 3]; i++)
+    ed[ol - 1 - i] = '=';
+  ed[ol] = '\0';
+  return ol;
+}
+
+//
+// Base64 decoder
+int base64dec(uint8_t dd[], const char *data, int inl) {
+  static char dec[KLEN] = {0};
+  int ol = inl / 4 * 3;
+  for (int i = 1; i <= 2; i++) {if (data[inl - i] == '=') ol--;}
+  for (int i = 0; i < 64; i++) dec[(uint8_t)enc[i]] = i;
+  for (int i = 0, j = 0; i < inl;) {
+    uint32_t a = sex(data, dec, i++), b = sex(data, dec, i++), c = sex(data, dec, i++), d = sex(data, dec, i++);
+    uint32_t tri = (a << 3 * 6) + (b << 2 * 6) + (c << 1 * 6) + (d << 0 * 6);
+    if (j < ol)
+      for (int k = 2; k >= 0; k--)
+        dd[j++] = (tri >> k * 8) & 0xff;
+  }
+  return ol;
+}
+
 
 //
 // Receive key (clears private key if we receive it for some reason)

@@ -31,6 +31,7 @@ struct asn {
 #define A1IA5STRI 0x22 // Header byte of the ASN.1 type IA5String
 #define A1UTCTIME 0x23 // Header byte of the ASN.1 type UTCTime
 #define A1GENTIME 0x24 // Header byte of the ASN.1 type GeneralizedTime
+#define KLEN 4096
 #define LEN 4096
 int crypto_init(const char *host, const char *port, bool b);
 void crypto_transfer_key(int s, bool snd, head *h, key *k);
@@ -44,6 +45,8 @@ void crypto_end(int s);
 
 u64 crypto_handle_cert(char d[LEN], const char *cert);
 u64 crypto_handle_asn(char c[LEN], const char *cert);
+int base64enc(char ed[], const uint8_t *data, int inl);
+int base64dec(uint8_t dd[], const char *data, int inl);
 #endif
 
 // Very simple handshake

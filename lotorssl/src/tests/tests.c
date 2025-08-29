@@ -12,7 +12,7 @@
 #include "../ciph.h"
 #include "../hash.h"
 #include "../cryp.h"
-#include "../keys.h"
+//#include "../keys.h"
 #include "../bmec.h"
 
 bint one = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};
@@ -25,6 +25,7 @@ uint8_t civ[32] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0
  Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit\
  in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt\
  mollit anim id est laborum.";
+
 uint8_t test_aes(void) {
   uint32_t key[8] = {0x603deb10, 0x15ca71be, 0x2b73aef0, 0x857d7781, 0x1f352c07, 0x3b6108d7, 0x2d9810a3, 0x0914dff4};
   uint32_t plain[4] = {0xf69f2445, 0xdf4f9b17, 0xad2b417b, 0xe66c3710};
@@ -259,6 +260,7 @@ uint8_t test_hash3shkrefloop2(void) {
   return 1;
 }
 
+/*
 uint8_t test_keysmake(void) {
   uint8_t pubkey[BYTES + 1] = {0}, privkey[BYTES] = {0};
   assert(keys_make(pubkey, privkey));
@@ -312,7 +314,7 @@ uint8_t test_keyssvrfyloop(void) {
   printf("keyssvrfyloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
   return 1;
 }
-
+*/
 uint8_t tester_bint_sanity(void) {
   bint a = bcreate(), b = bcreate(), c = bcreate(), d = bcreate();
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
@@ -437,11 +439,11 @@ int main(int argc, char** argv) {
     ret &= test_hash3shk();
     ret &= test_hash3shkbig();
     ret &= test_hash3shkref();
-    ret &= test_keysmake();
-    ret &= test_keyssecr();
-    ret &= test_keyssign();
-    ret &= test_keyssvrfy();
-    ret &= test_keyswrite();
+    //ret &= test_keysmake();
+    //ret &= test_keyssecr();
+    //ret &= test_keyssign();
+    //ret &= test_keyssvrfy();
+    //ret &= test_keyswrite();
     ret &= tester_bint_sanity();
     ret &= tester_bint_2ways_sanity();
     ret &= tester_bint_div_sanity();
@@ -464,12 +466,12 @@ int main(int argc, char** argv) {
       ret &= test_hash3shkref();
       ret &= test_hash3shkrefloop();
       ret &= test_hash3shkrefloop2();
-      ret &= test_keysmake();
-      ret &= test_keyssecr();
-      ret &= test_keyssign();
-      ret &= test_keyssvrfy();
-      ret &= test_keyswrite();
-      ret &= test_keyssvrfyloop(); // Slow as fudge
+      //ret &= test_keysmake();
+      //ret &= test_keyssecr();
+      //ret &= test_keyssign();
+      //ret &= test_keyssvrfy();
+      //ret &= test_keyswrite();
+      //ret &= test_keyssvrfyloop(); // Slow as fudge
       ret &= tester_bint_PK_loop(); // Slow as fudge!
     }
     // aesloop: Time 0s 580ms

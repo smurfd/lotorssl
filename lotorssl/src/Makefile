@@ -2,8 +2,8 @@ CC := gcc -O3 -ffast-math -Wall -pedantic -std=c99
 BUILD := .build
 SUBMODULES := lotormath
 
-all: mkbuilddir checksubmodules cryp hash keys ciph ec test
-local: mkbuilddir checksubmodules cryp hash keys ciph ec test_local
+all: mkbuilddir checksubmodules cryp hash ciph ec test
+local: mkbuilddir checksubmodules cryp hash ciph ec test_local
 
 mkbuilddir:
 	mkdir -p ${BUILD}
@@ -28,9 +28,6 @@ cryp:
 
 hash:
 	${CC} -c hash.c -o ${BUILD}/hash.o
-
-keys:
-	${CC} -c keys.c -o ${BUILD}/keys.o
 
 ciph:
 	${CC} -c ciph.c -o ${BUILD}/ciph.o
