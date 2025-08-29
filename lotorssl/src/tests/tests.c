@@ -12,7 +12,6 @@
 #include "../ciph.h"
 #include "../hash.h"
 #include "../cryp.h"
-//#include "../keys.h"
 #include "../bmec.h"
 
 bint one = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};
@@ -260,61 +259,6 @@ uint8_t test_hash3shkrefloop2(void) {
   return 1;
 }
 
-/*
-uint8_t test_keysmake(void) {
-  uint8_t pubkey[BYTES + 1] = {0}, privkey[BYTES] = {0};
-  assert(keys_make(pubkey, privkey));
-  return 1;
-}
-
-uint8_t test_keyssecr(void) {
-  uint8_t pubkey[BYTES + 1] = {0}, sec[BYTES] = {0}, privkey[BYTES] = {0};
-  assert(keys_make(pubkey, privkey));
-  assert(keys_secr(pubkey, privkey, sec));
-  return 1;
-}
-
-uint8_t test_keyssign(void) {
-  uint8_t sig[BYTES * 2] = {0}, pubkey[BYTES + 1] = {0}, sec[BYTES] = {0}, privkey[BYTES] = {0}, h[BYTES] = {0};
-  assert(keys_make(pubkey, privkey));
-  assert(keys_secr(pubkey, privkey, sec));
-  assert(keys_sign(privkey, h, sig));
-  return 1;
-}
-
-uint8_t test_keyssvrfy(void) {
-  uint8_t sig[BYTES * 2] = {0}, pubkey[BYTES + 1] = {0}, sec[BYTES] = {0}, privkey[BYTES] = {0}, h[BYTES] = {0};
-  assert(keys_make(pubkey, privkey));
-  assert(keys_secr(pubkey, privkey, sec));
-  assert(keys_sign(privkey, h, sig));
-  assert(keys_vrfy(pubkey, h, sig));
-  assert(!keys_vrfy(privkey, h, sig)); // assert failure
-  return 1;
-}
-
-uint8_t test_keyswrite(void) {
-  uint8_t pubkey[BYTES + 1] = {0}, privkey[BYTES] = {0};
-  assert(keys_make(pubkey, privkey));
-  keys_write("../.build/ca-own.key", privkey, 2);
-  return 1;
-}
-
-uint8_t test_keyssvrfyloop(void) {
-  uint32_t ret = 0;
-  clock_t start = clock();
-  uint8_t sig[BYTES * 2] = {0}, pubkey[BYTES + 1] = {0}, sec[BYTES] = {0}, privkey[BYTES] = {0}, h[BYTES] = {0};
-  for (int i = 0; i < 1000; i++) {
-    ret += !keys_make(pubkey, privkey);
-    ret += !keys_secr(pubkey, privkey, sec);
-    ret += !keys_sign(privkey, h, sig);
-    ret += !keys_vrfy(pubkey, h, sig);
-  }
-  assert(ret == 0);
-  clock_t cs = clock() - start;
-  printf("keyssvrfyloop: Time %us %ums\n", (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) / 1000, (uint32_t)((cs) * 1000 / CLOCKS_PER_SEC) % 1000);
-  return 1;
-}
-*/
 uint8_t tester_bint_sanity(void) {
   bint a = bcreate(), b = bcreate(), c = bcreate(), d = bcreate();
   str2bint(&a, "0x3b6859c358bb6fa30b3f11ff6c29164dc21b2abaf4c2027ea8e6701e99dd5b7c");
@@ -439,11 +383,6 @@ int main(int argc, char** argv) {
     ret &= test_hash3shk();
     ret &= test_hash3shkbig();
     ret &= test_hash3shkref();
-    //ret &= test_keysmake();
-    //ret &= test_keyssecr();
-    //ret &= test_keyssign();
-    //ret &= test_keyssvrfy();
-    //ret &= test_keyswrite();
     ret &= tester_bint_sanity();
     ret &= tester_bint_2ways_sanity();
     ret &= tester_bint_div_sanity();
@@ -466,12 +405,6 @@ int main(int argc, char** argv) {
       ret &= test_hash3shkref();
       ret &= test_hash3shkrefloop();
       ret &= test_hash3shkrefloop2();
-      //ret &= test_keysmake();
-      //ret &= test_keyssecr();
-      //ret &= test_keyssign();
-      //ret &= test_keyssvrfy();
-      //ret &= test_keyswrite();
-      //ret &= test_keyssvrfyloop(); // Slow as fudge
       ret &= tester_bint_PK_loop(); // Slow as fudge!
     }
     // aesloop: Time 0s 580ms
@@ -481,7 +414,6 @@ int main(int argc, char** argv) {
     // hash3bigloop: Time 13s 216ms
     // hash3shkrefloop: Time 0s 783ms
     // hash3shkrefloop2: Time 0s 783ms
-    // keyssvrfyloop: Time 2s 142ms
     // bint pk: Time 127s 149ms
   }
   if (ret) printf("OK\n");

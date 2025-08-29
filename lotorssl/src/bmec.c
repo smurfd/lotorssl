@@ -214,3 +214,110 @@ void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, 
 // https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
 // https://www.ietf.org/rfc/rfc4492.txt
 
+/*
+//
+// Write cert to file
+static u64 write_crt(FILE* ptr, const uint8_t data[]) {
+  int i = 4;
+  fprintf(ptr, "-----BEGIN CERTIFICATE-----\n");
+  fprintf(ptr, "MII");
+  while (i < 1779) {
+    fputc('y', ptr);
+    if (i % 64 == 0) fputc('\n', ptr);
+    i++;
+  }
+  fprintf(ptr, "==\n");
+  fprintf(ptr, "-----END CERTIFICATE-----\n");
+  return 1;
+}
+
+//
+// Write key to file
+// Public key: https://datatracker.ietf.org/doc/html/rfc5480
+// Private key: https://datatracker.ietf.org/doc/html/rfc5915.html
+static u64 write_key(FILE* ptr, const uint8_t data[]) {
+  char tmp[257] = {0};
+  uint8_t d[BYTES] = {0};
+  int i = 10, j = 0;
+  bit_unpack(d, (u64*)data);
+  j = base64enc(tmp, d, 164);
+  fprintf(ptr, "-----BEGIN EC PRIVATE KEY-----\n");
+  while (i < j) {
+    if (i % 64 == 0) fprintf(ptr, "\n");
+    fprintf(ptr, "%c", tmp[(i++) - 10]);
+  }
+  fprintf(ptr, "=\n-----END EC PRIVATE KEY-----\n");
+  return 1;
+}
+
+//
+// Write cms to file
+static u64 write_cms(FILE* ptr, const uint8_t data[]) {
+  fprintf(ptr, "%s\n", data);
+  return 1;
+}
+
+//
+// Write certificates/keys/cms
+u64 keys_write(char *fn, uint8_t data[], const int type) {
+  FILE* ptr = fopen(fn, "w");
+  u64 ret = 0;
+  if (type == 1) ret = write_crt(ptr, data); // Certificate
+  if (type == 2) ret = write_key(ptr, data); // Private key
+  if (type == 3) ret = write_cms(ptr, data); // CMS
+  fclose(ptr);
+  return ret;
+}
+
+
+// big[i] =
+// ((uint64_t)dig[0] << 56) |
+// ((uint64_t)dig[1] << 48) |
+// ((uint64_t)dig[2] << 40) |
+// ((uint64_t)dig[3] << 32) |
+// ((uint64_t)dig[4] << 24) |
+// ((uint64_t)dig[5] << 16) |
+// ((uint64_t)dig[6] << 8) |
+// (uint64_t)dig[7];
+//
+// Bit packing function uint8 to uint64
+void bit_pack(u64 big[], const uint8_t byte[]) {
+  for(uint32_t i = 0; i < 6; ++i) {
+    const uint8_t *dig = byte + 8 * (6 - 1 - i); big[i] = 0;
+    for (int j = 7; j >= 0; j--)
+      big[i] |= ((u64)dig[7 - j] << (j * 8));
+  }
+}
+
+// dig[0] = big[i] >> 56;
+// dig[1] = big[i] >> 48;
+// dig[2] = big[i] >> 40;
+// dig[3] = big[i] >> 32;
+// dig[4] = big[i] >> 24;
+// dig[5] = big[i] >> 16;
+// dig[6] = big[i] >> 8;
+// dig[7] = big[i];
+//
+// Bit unpack uint64 to uint8
+void bit_unpack(uint8_t byte[], const u64 big[]) {
+  for(uint32_t i = 0; i < 6; ++i) {
+    uint8_t *dig = byte + 8 * (6 - 1 - i);
+    for (int j = 7; j >= 0; j--)
+      dig[7 - j] = big[i] >> (j * 8);
+  }
+}
+
+//
+// Securely randomize arrays
+static void u64rnd_array(uint8_t h[], u64 k[], int len) {
+  u64 f7 = 0x7fffffffffffffff, r[2 * len];
+  FILE *f = fopen("/dev/urandom", "r");
+  fread(&r, sizeof(u64), len, f);
+  fclose(f);
+  for (int i = 0; i < len; ++i) {
+    h[i] = (uint8_t)(r[i] & f7);
+    k[i] = (u64)(r[i] & f7);
+  }
+}
+*/
+
