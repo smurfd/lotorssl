@@ -4,17 +4,17 @@
 #include <stdint.h>
 
 // Only defines here, no typedefs
-#define u64 unsigned long long int // because linux uint64_t is not same as on mac
+//#define u64 unsigned long long int // because linux uint64_t is not same as on mac
 
-#define EVEN(p) (!(p[0] & 1))
+//#define EVEN(p) (!(p[0] & 1))
 
 // Imitate pythons %. -1 % 5 = 4, not -1
-#define MOD(n, m) (((int)n % (int)m) + (int)m) % (int)m
+//#define MOD(n, m) (((int)n % (int)m) + (int)m) % (int)m
 
 // SSL
-#define RAND64() (rand() & 0x7fffffffffffffff) << 48 ^ (rand() & 0x7fffffffffffffff) << 35 ^\
-                 (rand() & 0x7fffffffffffffff) << 22 ^ (rand() & 0x7fffffffffffffff) << 9 ^\
-                 (rand() & 0x7fffffffffffffff) >> 4
+//#define RAND64() (rand() & 0x7fffffffffffffff) << 48 ^ (rand() & 0x7fffffffffffffff) << 35 ^\
+//                 (rand() & 0x7fffffffffffffff) << 22 ^ (rand() & 0x7fffffffffffffff) << 9 ^\
+//                 (rand() & 0x7fffffffffffffff) >> 4
 
 /*
 // Lightciphers
@@ -28,10 +28,10 @@
 */
 
 // Lightcrypto
-#define BLOCK 1024
+//#define BLOCK 1024
 
 // Lighthash3
-#define SHA3_BITS 1024 // SHA3-256 = 512, SHA3-512 = 1024 (default)
+//#define SHA3_BITS 1024 // SHA3-256 = 512, SHA3-512 = 1024 (default)
 /*
 // Lightkeys
 #define BYTES 48

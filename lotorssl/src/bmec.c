@@ -215,6 +215,7 @@ void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, 
 // https://www.ietf.org/rfc/rfc4492.txt
 
 /*
+#define u64 unsigned long long int // because linux uint64_t is not same as on mac
 //
 // Write cert to file
 static u64 write_crt(FILE* ptr, const uint8_t data[]) {

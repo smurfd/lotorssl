@@ -3,7 +3,6 @@
 #define CRYP_H 1
 #include <stdbool.h>
 #include <inttypes.h>
-#include "definitions.h"
 
 typedef struct asn asn;
 typedef struct keys key;
@@ -11,6 +10,7 @@ typedef struct header head;
 typedef struct sockaddr sock;
 typedef struct sockaddr_in sock_in;
 
+#define u64 unsigned long long int // because linux uint64_t is not same as on mac
 struct header {u64 len, ver, g, p;};
 struct keys {u64 publ, priv, shar;};
 struct asn {
@@ -18,6 +18,9 @@ struct asn {
   uint32_t len;
   const uint8_t *data;
 };
+#define RAND64() (rand() & 0x7fffffffffffffff) << 48 ^ (rand() & 0x7fffffffffffffff) << 35 ^\
+                 (rand() & 0x7fffffffffffffff) << 22 ^ (rand() & 0x7fffffffffffffff) << 9 ^\
+                 (rand() & 0x7fffffffffffffff) >> 4
 #define A1INTEGER 0x02 // Header byte of the ASN.1 type INTEGER
 #define A1BITSTRI 0x03 // Header byte of the ASN.1 type BIT STRING
 #define A1OCTSTRI 0x04 // Header byte of the ASN.1 type OCTET STRING
@@ -31,6 +34,7 @@ struct asn {
 #define A1IA5STRI 0x22 // Header byte of the ASN.1 type IA5String
 #define A1UTCTIME 0x23 // Header byte of the ASN.1 type UTCTime
 #define A1GENTIME 0x24 // Header byte of the ASN.1 type GeneralizedTime
+#define BLOCK 1024 // Imitate pythons %. -1 % 5 = 4, not -1
 #define KLEN 4096
 #define LEN 4096
 int crypto_init(const char *host, const char *port, bool b);

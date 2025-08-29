@@ -11,7 +11,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "definitions.h"
 #include "cryp.h"
 
 // Static variables

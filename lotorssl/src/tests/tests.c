@@ -8,7 +8,6 @@
 #include <string.h>
 #include <assert.h>
 #include "../lotormath/src/lotormath.h"
-#include "../definitions.h"
 #include "../ciph.h"
 #include "../hash.h"
 #include "../cryp.h"
