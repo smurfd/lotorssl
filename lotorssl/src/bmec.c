@@ -149,7 +149,7 @@ static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x
   B2CPY(ax, ay, *(bint*)p1x, *(bint*)p1y);
   for (int i = bbitlen(k) - 1; i >= 0; i--) {
     MPAPA(&tmp1, &tmp1, &kt, &two2, &rsx, &rsy, &ax, &ay, (bint*)p, tmp1.wrd[0], tmp.siz);
-    brshift(&kt, &kt, 1);
+    brshift1(&kt, &kt);
   }
   B2CPY(*(bint*)rx, *(bint*)ry, rsx, rsy);
 }
