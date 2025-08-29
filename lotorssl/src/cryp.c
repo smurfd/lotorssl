@@ -287,15 +287,15 @@ int err(char *s) {
 //
 // Output and parse the asn header.
 static int dump_and_parse(const uint8_t *cmsd, const uint32_t fs) {
-  int32_t objcnt = der_decode(NULL, NULL, (uint8_t*)cmsd, fs, 0, 0), m = 1;
+  int32_t objcnt = objcnt = der_decode(NULL, NULL, (uint8_t*)cmsd, fs, 0, 0),m = 1;
   asn cms[512];
-
   if (objcnt < 0) return err("Objects");
   if (der_decode(cms, cms, cmsd, fs, objcnt, 1) < 0) return err("Parse");
   print_asn(cms);
+  int32_t cm = cms[objcnt+1].type;
   // Hack to handle linux, at this point not sure why on linux type is spread on
   // every other, and on mac its as it should be. something with malloc?
-  if (cms[objcnt].type != 0 && cms[objcnt + 1].type != 0) m = 2;
+  if (cms[objcnt].type != 0 && cm != 0) m = 2;
   if (cms[0 * m].type != A1SEQUENC) return err("Sequence");
   if (cms[1 * m].type != A1OBJIDEN) return err("CT");
   if (memcmp(cms[1 * m].data, AA, cms[1 * m].len) != 0 || cms[3 * m].type != A1SEQUENC) return err("CT EncryptedData");

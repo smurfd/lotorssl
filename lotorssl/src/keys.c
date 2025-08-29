@@ -147,8 +147,9 @@ static u64 check_set(const u64 *a, const uint32_t b) {
 //
 // Check number of bits needed for a
 static uint32_t check_bits(const u64 *a) {
-  u64 i, nd = count(a), d = a[nd - 1];
+  u64 i, nd = count(a);
   if (nd == 0) return 0;
+  u64 d = a[nd - 1];
   for (i = 0; d; ++i) d >>= 1;
   return ((nd - 1) * 64 + i);
 }
@@ -648,11 +649,10 @@ int keys_secr(const uint8_t pub[], const uint8_t prv[], uint8_t scr[]) {
 int keys_sign(const uint8_t priv[], uint8_t hash[], uint8_t sign[]) {
   u64 tmp[DIGITS], s[DIGITS], kk[BYTES] = {0};
   uint8_t h[BYTES] = {0};
-  int firstrun = 0;
-  pt p;
+  pt p = {.x={0}};
   u64rnd_array(h, kk, BYTES);
   memcpy(hash, (uint8_t*)h, BYTES * sizeof(uint8_t));
-  while (check_zero(p.x) || firstrun++ <= 1) {
+  while (check_zero(p.x)) {
     if (check_zero(kk)) continue;
     if (compare(curve_n, kk) != 1) sub(kk, kk, curve_n);
     pt_mul(&p, &curve_g, kk, NULL);

@@ -10,10 +10,9 @@
 #include "bmec.h"
 #include "hash.h"
 
-#define MAM(di, dii, diim, tmp, kt, one1, two2) {bmod(di, tmp, kt, two2); badd(dii, di, one1); bmod(diim, tmp, dii, two2);}
-#define MULMOD(tmp, tmp2, hash1, h, h1, curveN) {bmul(tmp, hash1, h); bmod(h1, tmp2, tmp, curveN);}
-// TODO: document functions
-// TODO: struct point bint x, bint y?
+// Static variables
+bint zero0 = {.wrd[0] = 0, .siz = 1, .neg = 0, .cap = 1}, one1 = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};
+bint two2 = {.wrd[0] = 2, .siz = 1, .neg = 0, .cap = 1}, ctmpA, ctmpB, ctmpH, ctmpN, ctmpP, ctmpX, ctmpY;
 
 //
 // Securely randomize arrays
@@ -25,7 +24,7 @@ static inline void bintrnd_array(bint *r, int len) {
 
 static inline bint *inverse_mod(bint *ret, const bint *k, const bint *p) {
   bint s = bcreate(), ols = bcreate(), t = bcreate(), olt = bcreate(), r = bcreate(), olr = bcreate();
-  int16_t kz = k->wrd[0] != 0 | k->siz != 1;
+  int16_t kz = (k->wrd[0] != 0) | (k->siz != 1);
   if (kz == 0) {
     return NULL;
   } else if (kz < 0 || k->neg == 1) {
@@ -131,8 +130,6 @@ static inline void point_mul(bint *rx, bint *ry, const bint *p1x, const bint *p1
 }
 
 // k & 1 is the same as k % 2. If (k & 1) add to result, otherwise double
-#define MPAPA(tmp1, tmp2, kt, two2, rsx, rsy, ax, ay, p, tw, ts) {bmod(tmp1, tmp2, kt, two2); if (tw == 1 && ts == 1) point_add(rsx, rsy, rsx, rsy, ax, ay, p);\
-point_add(ax, ay, ax, ay, ax, ay, p);}
 static inline void scalar_mul(bint *rx, bint *ry, const bint *k, const bint *p1x, const bint *p1y, const bint *p, const bint *n) {
   bint rsx = bcreate(), rsy = bcreate(), ax = bcreate(), ay = bcreate(), q = bcreate(), kt = bcreate(), zx = bcreate();
   bint tmp = bcreate(), tmp1 = bcreate();
@@ -172,9 +169,6 @@ void sign(bint *sigx, bint *sigy, bint *pri, char *msg) {
   }
   B2CPY(*(bint*)sigx, *(bint*)sigy, c, d);
 }
-
-#define SMSM(h1x, h1y, h2x, h2y, h1, h2, curveX, curveY, pubx, puby, curveP, curveN) {scalar_mul(h1x, h1y, h1, curveX, curveY, curveP, curveN);\
-scalar_mul(h2x, h2y, h2, pubx, puby, curveP, curveN);}
 
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy) {
   bint hash1 = bcreate(), tmp = bcreate(), h = bcreate(), h1 = bcreate(), h2 = bcreate(), h1x = bcreate(), h1y = bcreate(), h2x = bcreate(), h2y = bcreate();

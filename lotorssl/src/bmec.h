@@ -10,11 +10,6 @@
 #include <stdio.h>
 #include "lotormath/src/lotormath.h"
 
-static bint zero0 = {.wrd[0] = 0, .siz = 1, .neg = 0, .cap = 1};
-static bint one1 = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};
-static bint two2 = {.wrd[0] = 2, .siz = 1, .neg = 0, .cap = 1};
-static bint ctmpA, ctmpB, ctmpH, ctmpN, ctmpP, ctmpX, ctmpY;
-
 void sign(bint *sigx, bint *sigy, bint *pri, char *msg);
 int16_t verify(bint *pubx, bint *puby, char *msg, bint *sigx, bint *sigy);
 void genkeypair(bint *pubx, bint *puby, bint *sec);
@@ -24,6 +19,13 @@ void verifysharedsecret(bint *alshrx, bint *alshry, bint *boshrx, bint *boshry, 
 #define PA(diim, di, r0x, r0y, r1x, r1y, p) {if (diim) point_add(r1x, r1y, r0x, r0y, r1x, r1y, p); else point_add(r0x, r0y, r0x, r0y, r1x, r1y, p);\
 if (di) point_add(r1x, r1y, r1x, r1y, r1x, r1y, p); else point_add(r0x, r0y, r0x, r0y, r0x, r0y, p);}
 #define B2CPY(r1, r2, a1, a2) {r1 = a1; r2 = a2;}
+#define MAM(di, dii, diim, tmp, kt, one1, two2) {bmod(di, tmp, kt, two2); badd(dii, di, one1); bmod(diim, tmp, dii, two2);}
+#define MULMOD(tmp, tmp2, hash1, h, h1, curveN) {bmul(tmp, hash1, h); bmod(h1, tmp2, tmp, curveN);}
+#define MPAPA(tmp1, tmp2, kt, two2, rsx, rsy, ax, ay, p, tw, ts) {bmod(tmp1, tmp2, kt, two2); if (tw == 1 && ts == 1) point_add(rsx, rsy, rsx, rsy, ax, ay, p);\
+point_add(ax, ay, ax, ay, ax, ay, p);}
+#define SMSM(h1x, h1y, h2x, h2y, h1, h2, curveX, curveY, pubx, puby, curveP, curveN) {scalar_mul(h1x, h1y, h1, curveX, curveY, curveP, curveN);\
+scalar_mul(h2x, h2y, h2, pubx, puby, curveP, curveN);}
+
 #define curveA wrd2bint(&ctmpA, 0)
 #define curveB wrd2bint(&ctmpB, 7)
 #define curveH wrd2bint(&ctmpH, 1)
