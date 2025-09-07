@@ -11,16 +11,12 @@ mkbuilddir:
 checksubmodules:
 	for s in ${SUBMODULES} ; do \
 		if [ -d $$s ]; then \
-			if [ -f "$$s/README.md" ]; then \
-				echo $$s;\
-			else \
-				git submodule init; \
-				git submodule update; \
-			fi; \
-		else \
-			git submodule init; \
-			git submodule update; \
+			echo "Deleting $$s ..."; \
+			rm -rf $$s; \
 		fi;\
+		git submodule add --force https://github.com/smurfd/$$s; \
+		git submodule init; \
+		git submodule update; \
 	done
 
 cryp:
