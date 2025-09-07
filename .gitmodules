@@ -1,4 +1,3 @@
-[submodule "lotorssl/src/lotormath"]
-	path = lotorssl/src/lotormath
+[submodule "src/lotormath"]
+	path = src/lotormath
 	url = https://github.com/smurfd/lotormath
-

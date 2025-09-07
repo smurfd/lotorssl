@@ -22,13 +22,13 @@ Hashing: SHA3-256, SHA3-512<br>
 
 ### Compile lotorssl
 ```bash
-make -lotorssl/src # fetches submodules if they dont exist
+make -Csrc # fetches submodules if they dont exist
 ```
 
 ### Use lotorssl
-See the [tests](https://github.com/smurfd/lotorssl/tree/master/lotorssl/src/tests)
+See the [tests](https://github.com/smurfd/lotorssl/tree/master/src/tests)
 
-### Compile your project (in the lotorssl/src/example folder)
+### Compile your project (in the src/example folder)
 ```bash
 gcc -c -o hash.o ../hash.c -fPIC -Wall -pedantic -O3
 gcc -c -o keys.o ../keys.c -fPIC -Wall -pedantic -O3
@@ -38,7 +38,7 @@ gcc example.c -o example hash.o tool.o -Wall -pedantic -O3
 ./example
 rm -f example *.o
 ```
-### Small example (in the lotorssl/src/example folder)
+### Small example (in the src/example folder)
 ```c
 #include <stdio.h>
 #include <assert.h>

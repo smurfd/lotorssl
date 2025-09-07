@@ -1,6 +1,4 @@
 .DS_Store
-lotorssl/src/lightcrypto/__*
-lotorssl/src/lightbig
-lotorssl/src/.build/
+src/lotormath
+src/.build/
 ca*
-lotorssl/src/rewrite/lotorssl/src/.build
