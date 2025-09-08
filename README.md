@@ -56,6 +56,3 @@ int main(void) {
 }
 ```
 
-# Very simple Crypto handshake
-very simple Crypto handshake in Python
-[lightcrypto](https://github.com/smurfd/lotorssl/tree/main/lotorssl/src/lightcrypto)
