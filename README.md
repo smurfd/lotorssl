@@ -12,21 +12,21 @@
 ```
 `https://en.wikipedia.org/wiki/Raccoon`
 
-# lotorssl
-Do SSL really need to be so hard?
+
+Do SSL really need to be so hard? (TL;DR yes)
 
 Ciphers: AES<br>
 Keys: ECDSA<br>
 Crypto: ASN1<br>
 Hashing: SHA3-256, SHA3-512<br>
 
-### Compile lotorssl
+### Build
 ```bash
-git clone https://github.com/smurfd/lotorssl
+git clone https://github.com/smurfd/lotorssl && cd lotorssl
 make -Csrc # fetches submodules if they dont exist
 ```
 
-### Use lotorssl
+### Usage
 See the [tests](https://github.com/smurfd/lotorssl/tree/master/src/tests)
 
 ### Compile your project (in the src/example folder)
