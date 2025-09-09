@@ -1,9 +1,11 @@
-CC := gcc -O3 -ffast-math -Wall -pedantic -std=c99
+CC := gcc -O3 -ffast-math -Wall -pedantic -std=c11 -march=native
 BUILD := .build
 SUBMODULES := lotormath
+MODULES := mkbuilddir checksubmodules cryp hash ciph ec
 
-all: mkbuilddir checksubmodules cryp hash ciph ec test
-local: mkbuilddir checksubmodules cryp hash ciph ec test_local
+all: ${MODULES} test
+local: ${MODULES} test_local
+
 
 mkbuilddir:
 	mkdir -p ${BUILD}
@@ -33,7 +35,7 @@ ec:
 	${CC} -c bmec.c -o ${BUILD}/bmec.o
 
 test:
-	make -Ctests
+	${MAKE} -Ctests
 
 test_local:
-	make -Ctests local
+	${MAKE} -Ctests local

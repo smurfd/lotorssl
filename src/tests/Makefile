@@ -1,8 +1,9 @@
-CC:=gcc -O3 -ffast-math -Wall -pedantic -std=c99
-BUILD:=../.build
+CC := gcc -O3 -ffast-math -Wall -pedantic -std=c11 -march=native
+BUILD := ../.build
 
 all: mkcrt tests runner
 local: mkcrt tests runner_local
+
 
 mkcrt:
 	echo "66612345678966601234567890666" | openssl cms -EncryptedData_encrypt -aes128 -secretkey 31337DEADBEEF666999ABCDEF31337FF -outform der > ${BUILD}/ca128.cms
