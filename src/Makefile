@@ -5,7 +5,7 @@ MODULES := mkbuilddir checksubmodules cryp hash ciph ec
 
 all: ${MODULES} test
 local: ${MODULES} test_local
-
+build: ${MODULES}
 
 mkbuilddir:
 	mkdir -p ${BUILD}
