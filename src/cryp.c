@@ -216,7 +216,7 @@ static u64 get_footer(uint8_t f[], const char c[], const u64 len) {
   u64 i = 0, j = strlen(c) - strlen(strstr(c, "-----E"));
   // check for the start of -----END CERTIFICATE-----
 
-  while (c[i] != '\n') {f[i] = c[j]; i++; j++;} f[i-2] = '\0';
+  while (c[i] != '\n' && i <= len) {f[i] = c[j]; i++; j++;} f[i-2] = '\0';
   return i + 1;
 }
 

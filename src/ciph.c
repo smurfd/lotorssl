@@ -409,7 +409,7 @@ static inline void GCM_MULTIPLY32bit(uint32_t *BITZ, const uint32_t *BITX, const
 static inline void GHASH(uint8_t *Y, const uint8_t *X, const uint8_t *H, uint32_t lenx) {
   uint8_t tmp[32] = {0};
   memset(Y, 0, 16 * sizeof(uint8_t));
-  for (int i = 1; i < (lenx / 16) + 1; i++) {
+  for (uint32_t i = 1; i < (lenx / 16) + 1; i++) {
     xorblock(tmp, Y, X + ((i - 1) * 16));
     GCM_MULTIPLY(Y, tmp, H);
   }
@@ -418,7 +418,7 @@ static inline void GHASH(uint8_t *Y, const uint8_t *X, const uint8_t *H, uint32_
 static inline void GHASH32bit(uint32_t *Y, const uint32_t *X, const uint32_t *H, uint32_t lenx) {
   uint32_t tmp[32] = {0};
   memset(Y, 0, 8 * sizeof(uint32_t));
-  for (int i = 1; i < (lenx / 16) + 1; i++) {
+  for (uint32_t i = 1; i < (lenx / 16) + 1; i++) {
     xorblock32bit(tmp, Y, X + ((i - 1) * 8));
     GCM_MULTIPLY32bit(Y, tmp, H);
   }
@@ -447,8 +447,7 @@ static inline void GCTR(uint8_t *Y, const uint8_t *ICB, const uint8_t *X, const 
     CBb[3] = CB[j + 3];
     CBwrd[j/4] = bytes2word(CBb);
   }
-  for (int i = 0; i < nblocks; i++) {
-    //(((i + 1) * 16) > lenx) ? break;:;
+  for (uint32_t i = 0; i < nblocks; i++) {
     if (((i + 1) * 16) > lenx) break;
     cipher(eCB, keywrd, CBinc++);
     for (int j = 0; j < 8; j++) {
@@ -481,7 +480,7 @@ static inline void GCTR32bit(uint32_t *Y, const uint32_t *ICB, const uint32_t *X
   if (X == NULL) return;
   for (int i = 0; i < 8; i++) CB[i] = ICB[i];
   (*CB)++;
-  for (int i = 0; i < nblocks; i++) {
+  for (uint32_t i = 0; i < nblocks; i++) {
     if (((i + 1) * 8) > lenx) break;
     cipher(eCB, key, CBinc++);
     memcpy(plain, X + (i * 8), 8 * sizeof(uint32_t));
