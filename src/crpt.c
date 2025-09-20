@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include "ciph.h"
 #include "bmec.h"
 #include "crpt.h"
 
@@ -55,16 +56,16 @@ void receive_publickey(connection c, bint *pubx, bint *puby) {
 
 //
 // Send encrypted data
-void send_encrypteddata(connection c, encd e) {
+int send_encrypteddata(connection c, encd e) {
   int sock = *((connection*)&c)->clisocket;
-  send(sock, &e, sizeof(encd), 0);
+  return send(sock, &e, sizeof(encd), 0);
 }
 
 //
 // Receive encrypted data
-void receive_encrypteddata(connection c, encd e) {
+int receive_encrypteddata(connection c, encd e) {
   int sock = *((connection*)&c)->clisocket;
-  recv(sock, &e, sizeof(encd), 0);
+  return recv(sock, &e, sizeof(encd), 0);
 }
 
 static void *server_connection_handler_ssl(void *conn) { // TODO: use template from examples
@@ -87,27 +88,25 @@ static void *server_connection_handler(void *conn) {
   gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
   // verify that the shared secrets are the same
   verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
-  // TODO: use shared secret to encrypt
-  // send_encrypteddata();
-  // if (receive_encrypteddata() > 0) {                                           // Handshake ^^^
-    // TODO: verify that the encrypted data is ok
+  encd re, se;
+  uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
+  plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
+  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
+  gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
+  for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
+  for (int i = 0; i < 32; i++) {wrd2bint(&se.data[i], cipher[i]);}
+  send_encrypteddata(*(connection*)conn, se);
+  if (receive_encrypteddata(*(connection*)conn, re) > 0) {                                           // Handshake ^^^
+    uint32_t red[32] = {0};
+    for (int i = 0; i < 32; i++) {red[i] = re.data[i].wrd[0];}
+    gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
+    // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
     pthread_t ssl_thread;
     if (pthread_create(&ssl_thread, NULL, server_connection_handler_ssl, (void*)conn) < 0) {
       perror("\"[o.o]\" \t Could not create thread");
     }
     pthread_join(ssl_thread, NULL);
-  // }
-
-  // Alice and Bob, agree on a large prime number p and a generator g, where g is a primitive root of p.
-  // Both p and g are public knowledge and can be shared openly.
-  // Alice chooses a random secret number, a, and calculates A = g^a mod p. Sendd A to Bob
-  // Bob chooses a random secret number, b, and calculates B = g^b mod p. Send B to Alice
-  // Alice calculates the shared secret key as K = B^a mod p.
-  // Bob calculates the shared secret key as K = A^b mod p.
-
-  // Both parties now have the same secret key, K, which can be used for symmetric encryption and decryption
-  // of messages exchanged over the insecure channel. Since private keys a and b are never shared,
-  // an eavesdropper who intercepts the messages between Alice and Bob cannot calculate the secret key.
+  }
   return 0;
 }
 
@@ -174,27 +173,25 @@ static void *client_connection_handler(void *conn) {
   gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
   // verify that the shared secrets are the same
   verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
-  // TODO: use shared secret to encrypt using AES
-  // receive_encrypteddata();
-  // if (send_encrypteddata() > 0) {                                        // Handshake ^^^ 
-    // TODO: verify that the encrypted data is ok
+  encd re, se;
+  uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
+  plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
+  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
+  gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
+  for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
+  for (int i = 0; i < 32; i++) {wrd2bint(&se.data[i], cipher[i]);}
+  receive_encrypteddata(*(connection*)conn, re);
+  uint32_t red[32] = {0};
+  for (int i = 0; i < 32; i++) {red[i] = re.data[i].wrd[0];}
+  gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
+  // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
+  if (send_encrypteddata(*(connection*)conn, se) >= 0) {                                        // Handshake ^^^
     pthread_t ssl_thread;
     if (pthread_create(&ssl_thread, NULL, client_connection_handler_ssl, (void*)conn) < 0) {
       perror("\"[o.o]\" \t Could not create thread");
     }
     pthread_join(ssl_thread, NULL);
-  // }
-
-  // Alice and Bob, agree on a large prime number p and a generator g, where g is a primitive root of p.
-  // Both p and g are public knowledge and can be shared openly.
-  // Alice chooses a random secret number, a, and calculates A = g^a mod p. Sendd A to Bob
-  // Bob chooses a random secret number, b, and calculates B = g^b mod p. Send B to Alice
-  // Alice calculates the shared secret key as K = B^a mod p.
-  // Bob calculates the shared secret key as K = A^b mod p.
-
-  // Both parties now have the same secret key, K, which can be used for symmetric encryption and decryption
-  // of messages exchanged over the insecure channel. Since private keys a and b are never shared,
-  // an eavesdropper who intercepts the messages between Alice and Bob cannot calculate the secret key.
+  }
   return 0;
 }
 

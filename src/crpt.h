@@ -49,8 +49,8 @@ sockets communication_init(const char *host, const char *port);
 
 void send_publickey(connection c, bint *pubx, bint *puby);
 void receive_publickey(connection c, bint *pubx, bint *puby);
-void send_encrypteddata(connection c, encd e);
-void receive_encrypteddata(connection c, encd e);
+int send_encrypteddata(connection c, encd e);
+int receive_encrypteddata(connection c, encd e);
 
 // Generators
 //cryptokey generate_cryptokeys(head *h);
