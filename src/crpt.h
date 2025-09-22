@@ -1,6 +1,6 @@
 // Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
-#ifndef CRYPTO_H
-#define CRYPTO_H 1
+#ifndef CRPT_H
+#define CRPT_H 1
 #include <stdbool.h>
 #include <stdint.h>
 #include <netinet/in.h>
@@ -35,7 +35,7 @@ typedef struct sockets {
 } sockets;
 
 typedef struct encd {
-  bint data[1024];
+  uint32_t data[1024];
 } encd;
 
 connection connection_init(int8_t descriptor, int type);
@@ -49,13 +49,19 @@ sockets communication_init(const char *host, const char *port);
 
 void send_publickey(connection c, bint *pubx, bint *puby);
 void receive_publickey(connection c, bint *pubx, bint *puby);
-int send_encrypteddata(connection c, encd e);
-int receive_encrypteddata(connection c, encd e);
+int send_encrypteddata(connection c, encd *e);
+int receive_encrypteddata(connection c, encd *e);
 
 // Generators
 //cryptokey generate_cryptokeys(head *h);
 void handler_cryptography(u64 data, cryptokey k, u64 *enc);
 
+connection crpt_client_init(const char *host, const char *port);//, int type);
+void crpt_client_end(connection c);
+int crpt_client_handle(connection conn);
+connection crpt_server_init(const char *host, const char *port);//, int type);
+void crpt_server_end(connection c);
+int crpt_server_handle(connection conn);
 // Tooling
 //int usage(char *arg, int count, char *clisrv);
 #endif

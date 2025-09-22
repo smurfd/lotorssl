@@ -56,16 +56,17 @@ void receive_publickey(connection c, bint *pubx, bint *puby) {
 
 //
 // Send encrypted data
-int send_encrypteddata(connection c, encd e) {
+int send_encrypteddata(connection c, encd *e) {
   int sock = *((connection*)&c)->clisocket;
-  return send(sock, &e, sizeof(encd), 0);
+  // TODO: encrypted data can only be uint32_t
+  return send(sock, e, sizeof(encd), 0);
 }
 
 //
 // Receive encrypted data
-int receive_encrypteddata(connection c, encd e) {
+int receive_encrypteddata(connection c, encd *e) {
   int sock = *((connection*)&c)->clisocket;
-  return recv(sock, &e, sizeof(encd), 0);
+  return recv(sock, e, sizeof(encd), 0);
 }
 
 static void *server_connection_handler_ssl(void *conn) { // TODO: use template from examples
@@ -87,18 +88,18 @@ static void *server_connection_handler(void *conn) {
   gensharedsecret(&alshrx, &alshry, &alsk, &alpkx, &alpky); // Alice's shared secret(but with alices private key)
   gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
   // verify that the shared secrets are the same
-  verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
+  //verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
   encd re, se;
   uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
   plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
   cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
   gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
-  for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
-  for (int i = 0; i < 32; i++) {wrd2bint(&se.data[i], cipher[i]);}
-  send_encrypteddata(*(connection*)conn, se);
-  if (receive_encrypteddata(*(connection*)conn, re) > 0) {                                           // Handshake ^^^
+  //for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
+  for (int i = 0; i < 32; i++) {se.data[i] = cipher[i];}
+  send_encrypteddata(*(connection*)conn, &se);
+  if (receive_encrypteddata(*(connection*)conn, &re) > 0) {                                           // Handshake ^^^
     uint32_t red[32] = {0};
-    for (int i = 0; i < 32; i++) {red[i] = re.data[i].wrd[0];}
+    for (int i = 0; i < 32; i++) {red[i] = re.data[i];}
     gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
     // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
     pthread_t ssl_thread;
@@ -120,7 +121,7 @@ static int server_run(const char *host, const char *port) {
   return sock.descriptor;
 }
 
-int server_handle(connection conn) {
+int crpt_server_handle(connection conn) {
   int client_sock, c = sizeof(struct sockaddr_in);
   struct sockaddr_in client;
   while ((client_sock = accept(conn.socket, (struct sockaddr*)&client, (socklen_t*)&c))) {
@@ -141,7 +142,8 @@ int server_handle(connection conn) {
 
 //
 // Initialize server
-connection server_init(const char *host, const char *port, int type) {
+connection crpt_server_init(const char *host, const char *port) {//, int type) {
+  int type = 1;
   int socket_desc = server_run(host, port);
   printf("\"[o.o]\" \t eating food...\n");
   return connection_init(socket_desc, type);
@@ -149,7 +151,7 @@ connection server_init(const char *host, const char *port, int type) {
 
 //
 // End connection
-void server_end(connection c) {
+void crpt_server_end(connection c) {
   close(c.socket);
 }
 
@@ -172,20 +174,20 @@ static void *client_connection_handler(void *conn) {
   gensharedsecret(&alshrx, &alshry, &alsk, &alpkx, &alpky); // Alice's shared secret(but with alices private key)
   gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
   // verify that the shared secrets are the same
-  verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
+  //verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
   encd re, se;
   uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
   plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
   cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
   gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
-  for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
-  for (int i = 0; i < 32; i++) {wrd2bint(&se.data[i], cipher[i]);}
-  receive_encrypteddata(*(connection*)conn, re);
+  //for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
+  for (int i = 0; i < 32; i++) {se.data[i] = cipher[i];}
+  receive_encrypteddata(*(connection*)conn, &re);
   uint32_t red[32] = {0};
-  for (int i = 0; i < 32; i++) {red[i] = re.data[i].wrd[0];}
+  for (int i = 0; i < 32; i++) {red[i] = re.data[i];}
   gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
   // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
-  if (send_encrypteddata(*(connection*)conn, se) >= 0) {                                        // Handshake ^^^
+  if (send_encrypteddata(*(connection*)conn, &se) >= 0) {                                        // Handshake ^^^
     pthread_t ssl_thread;
     if (pthread_create(&ssl_thread, NULL, client_connection_handler_ssl, (void*)conn) < 0) {
       perror("\"[o.o]\" \t Could not create thread");
@@ -204,7 +206,7 @@ static int client_run(const char *host, const char *port) {
   return sock.descriptor;
 }
 
-int client_handle(connection conn) {
+int crpt_client_handle(connection conn) {
   pthread_t thread;
   conn.clisocket = &(conn.socket);
   if (pthread_create(&thread, NULL, client_connection_handler, (void*)&conn) < 0) {
@@ -217,15 +219,16 @@ int client_handle(connection conn) {
 
 //
 // Initialize client
-connection client_init(const char *host, const char *port, int type) {
+connection crpt_client_init(const char *host, const char *port) {//, int type) {
   printf("\"[o.o]\" \t finding food...\n");
+  int type = 1;
   int socket_desc = client_run(host, port);
   return connection_init(socket_desc, type);
 }
 
 //
 // End connection
-void client_end(connection c) {
+void crpt_client_end(connection c) {
   close(c.socket);
 }
 
