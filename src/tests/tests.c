@@ -55,7 +55,7 @@ uint8_t test_aesloop(void) {
 }
 
 uint8_t test_aesgcm(void) {
-  gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad,  32);
+  gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad, 32);
   gcm_inv_ciphertag(cplain2, ctag2, ckey, civ, ccipher, caad, ctag);
   cres += memcmp(cplain, cplain2, 32 * sizeof(uint8_t));
   assert(cres == 0);
@@ -65,7 +65,7 @@ uint8_t test_aesgcm(void) {
 uint8_t test_aesgcmloop(void) {
   clock_t start = clock();
   for (int i = 0; i < 1000000; i++) {
-    gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad,  32);
+    gcm_ciphertag(ccipher, ctag, ckey, civ, cplain, caad, 32);
     gcm_inv_ciphertag(cplain2, ctag2, ckey, civ, ccipher, caad, ctag);
     cres += memcmp(cplain, cplain2, 32 * sizeof(uint8_t));
   }
@@ -80,7 +80,7 @@ uint8_t test_aesgcm32bit(void) {
   key[32] = {0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617, 0x18191a1b, 0x1c1d1e1f},
   plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
   cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0}, res = 0;
-  gcm_ciphertag32bit(cipher, tag, key, iv, plain, aad,  32);
+  gcm_ciphertag32bit(cipher, tag, key, iv, plain, aad, 32);
   gcm_inv_ciphertag32bit(plain2, tag2, key, iv, cipher, aad, tag);
   res += memcmp(plain, plain2, 8 * sizeof(uint32_t));
   assert(res == 0);

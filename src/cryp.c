@@ -40,11 +40,13 @@ int base64enc(char ed[], const uint8_t *data, int inl) {
   int tab[] = {0, 2, 1}, ol = 4 * ((inl + 2) / 3);
   for (int i = 0, j = 0; i < inl;) {
     uint32_t a = oct(i++, inl, data), b = oct(i++, inl, data), c = oct(i++, inl, data),tri = (a << 0x10)+(b << 0x08) + c;
-    for (int k = 3; k >=0; k--)
+    for (int k = 3; k >=0; k--) {
       ed[j++] = enc[(tri >> k * 6) & 0x3f];
+    }
   }
-  for (int i = 0; i < tab[inl % 3]; i++)
+  for (int i = 0; i < tab[inl % 3]; i++) {
     ed[ol - 1 - i] = '=';
+  }
   ed[ol] = '\0';
   return ol;
 }
@@ -59,9 +61,9 @@ int base64dec(uint8_t dd[], const char *data, int inl) {
   for (int i = 0, j = 0; i < inl;) {
     uint32_t a = sex(data, dec, i++), b = sex(data, dec, i++), c = sex(data, dec, i++), d = sex(data, dec, i++);
     uint32_t tri = (a << 3 * 6) + (b << 2 * 6) + (c << 1 * 6) + (d << 0 * 6);
-    if (j < ol)
-      for (int k = 2; k >= 0; k--)
-        dd[j++] = (tri >> k * 8) & 0xff;
+    if (j < ol) {
+      for (int k = 2; k >= 0; k--) dd[j++] = (tri >> k * 8) & 0xff;
+    }
   }
   return ol;
 }
@@ -87,12 +89,10 @@ static void send_key(int s, head *h, key *k) {
 static void *srv_handler(void *sdesc) {
   u64 dat[BLOCK], cd[BLOCK], g1 = RAND64(), p1 = RAND64();
   int s = *(int*)sdesc;
-
   if (s == -1) {return (void*)-1;}
   key k1 = crypto_gen_keys(g1, p1), k2;
   k2.publ = 0; k2.priv = 0; k2.shar = 0;
   head h; h.g = g1; h.p = p1;
-
   // Send and receive stuff
   if (h.len > BLOCK) {return (void*)-1;}
   crypto_transfer_key(s, true, &h, &k1);
@@ -117,7 +117,6 @@ void cryption(u64 data, key k, u64 *enc) {
 int crypto_init(const char *host, const char *port, bool b) {
   int s = socket(AF_INET, SOCK_STREAM, 0);
   sock_in adr;
-
   memset(&adr, '\0', sizeof(adr));
   adr.sin_family = AF_INET;
   adr.sin_port = atoi(port);
@@ -138,7 +137,6 @@ void crypto_transfer_data(const int s, void* data, head *h, bool snd, u64 len) {
 // Transfer keys (send and receive)
 void crypto_transfer_key(int s, bool snd, head *h, key *k) {
   key tmp;
-
   if (snd) {send_key(s, h, k);}
   else { // This to ensure if we receive a private key we clear it
     recv_key(s, h, &tmp);
@@ -154,7 +152,6 @@ void crypto_end(int s) {close(s);}
 // Server listener
 int crypto_srv_listen(const int s, sock *cli) {
   int c = 1, ns[sizeof(int)], len = sizeof(sock_in);
-
   listen(s, 3);
   while (c >= 1) {
     c = accept(s, (sock*)&cli, (socklen_t*)&len);
@@ -177,7 +174,6 @@ void crypto_gen_share(key *k1, key *k2, u64 p, bool srv) {
 // Generate a public and private keypair
 key crypto_gen_keys(u64 g, u64 p) {
   key k;
-
   k.priv = RAND64();
   k.publ = (int64_t)pow(g, k.priv) % p;
   return k;
@@ -188,7 +184,6 @@ key crypto_gen_keys(u64 g, u64 p) {
 int crypto_gen_keys_local(void) {
   u64 g1 = RAND64(), g2 = RAND64(), p1 = RAND64(), p2 = RAND64(), c = 123456, d = 1, e = 1;
   key k1 = crypto_gen_keys(g1, p1), k2 = crypto_gen_keys(g2, p2);
-
   crypto_gen_share(&k1, &k2, p1, false);
   crypto_gen_share(&k1, &k2, p1, true);
   printf("Alice public & private key: 0x%.16llx 0x%.16llx\n", k1.publ, k1.priv);
@@ -207,7 +202,6 @@ int crypto_gen_keys_local(void) {
 static u64 get_header(uint8_t h[], const char c[]) {
   u64 i = strlen(c) - strlen(strstr(c, "-----B"));
   // Check for the start of -----BEGIN CERTIFICATE-----
-
   while (c[i] != '\n') {h[i] = c[i]; i++;} h[i] = '\0';
   return i + 1;
 }
@@ -215,14 +209,12 @@ static u64 get_header(uint8_t h[], const char c[]) {
 static u64 get_footer(uint8_t f[], const char c[], const u64 len) {
   u64 i = 0, j = strlen(c) - strlen(strstr(c, "-----E"));
   // check for the start of -----END CERTIFICATE-----
-
   while (c[i] != '\n' && i <= len) {f[i] = c[j]; i++; j++;} f[i-2] = '\0';
   return i + 1;
 }
 
 static u64 get_data(char d[], const char c[], const u64 h, const u64 f, const u64 l) {
   u64 co = l - f - h, i = 0;
-
   while (i < co) {d[i] = c[h + i]; i++;} d[i] = '\0';
   return i;
 }
@@ -230,13 +222,11 @@ static u64 get_data(char d[], const char c[], const u64 h, const u64 f, const u6
 static u64 read_cert(char c[], const char *fn, const bool iscms) {
   FILE* ptr = fopen(fn, "r");
   u64 len = 0;
-
   if (ptr == NULL) {printf("Can't find cert: %s\n", fn);}
   if (iscms) {
     uint32_t fs = 0, fpos = 0;
     while (EOF != fgetc(ptr)) ++fs;
     rewind(ptr);
-
     int fr = fgetc(ptr);
     while (fr != EOF && fpos < fs) {c[fpos++] = (uint8_t)fr; fr = fgetc(ptr);}
     len = fs;
@@ -274,7 +264,6 @@ static void print_asn(const asn *asn) {
 // Get the length // t = type, 1 = tlv, 0 = data
 static uint32_t get_len(uint32_t *off, const uint8_t *data, uint32_t len, const bool t) {
   uint32_t a, b = 0, ret;
-
   if (len < 2) return 0xffffffff;
   ++data; a = *data++; len -= 2; *off = 0;
   if (t == 1) {++(*off); ++(*off); ret = a + (*off);}
@@ -300,7 +289,6 @@ static void init_asn(asn asn[]) {
 static int32_t der_decode(asn o[], asn oobj[], const uint8_t *der, uint32_t derlen, uint32_t oobjc, bool dec) {
   uint32_t deroff=0,derenclen=get_len(&deroff,der,derlen,1),childrenlen=0,derdatl=derenclen-deroff, childoff=0,objcnt=1;
   const uint8_t *derdat = (der + deroff);
-
   if (dec) {init_asn(o); if (o == NULL) return -1; o->type = *der; o->len = derdatl; o->data = derdat;}
   if (der == NULL || derlen == 0 || derenclen < deroff) return -1;
   if (derenclen == 0xffffffff || derlen < derenclen) return -1;
@@ -310,7 +298,6 @@ static int32_t der_decode(asn o[], asn oobj[], const uint8_t *der, uint32_t derl
       const uint8_t *child = (der + deroff);
       uint32_t childlen = get_len(&childoff, child, (derenclen - deroff), 1);
       int32_t childobj = der_decode(NULL, NULL, child, childlen, 0, 0);
-
       if (childlen == 0xffffffff || (childlen+childrenlen) > derdatl) return -1;
       if (childobj < 0 || derenclen < derdatl) return -1;
       if (dec) {
@@ -381,7 +368,6 @@ u64 crypto_handle_cert(char d[LEN], const char *cert) {
   u64 len = read_cert(crt, cert, 0), head = get_header(h, crt);
   u64 foot = get_footer(f, crt, len);
   u64 data = get_data(d, crt, head, foot, len);
-
   print_cert(len, h, f, d);
   return data;
 }

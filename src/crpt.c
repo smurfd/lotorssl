@@ -17,7 +17,7 @@ sockets communication_init(const char *host, const char *port) {
   sockets sock;
   sock.descriptor = socket(AF_INET , SOCK_STREAM , 0);
   if (sock.descriptor == -1) {
-    perror("\"[o.o]\" \t Could not create a socket\n");
+    perror("\"[o.o]\"  Could not create a socket\n");
     exit(0);
   }
   memset(&(sock.addr), '\0', sizeof(sock.addr));
@@ -58,7 +58,6 @@ void receive_publickey(connection c, bint *pubx, bint *puby) {
 // Send encrypted data
 int send_encrypteddata(connection c, encd *e) {
   int sock = *((connection*)&c)->clisocket;
-  // TODO: encrypted data can only be uint32_t
   return send(sock, e, sizeof(encd), 0);
 }
 
@@ -75,38 +74,30 @@ static void *server_connection_handler_ssl(void *conn) { // TODO: use template f
 }
 
 static void *server_connection_handler(void *conn) {
-  bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
-  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate();
-  if (((connection*)conn)->socket == -1) return (void*) - 1;                    // Handshake vvv
-  // generate server keypair
-  genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
-  // send server public key to client
-  send_publickey(*(connection*)conn, &alpkx, &alpky);
-  // receive public key from client
-  receive_publickey(*(connection*)conn, &bopkx, &bopky);
-  // generate shared secret
-  gensharedsecret(&alshrx, &alshry, &alsk, &alpkx, &alpky); // Alice's shared secret(but with alices private key)
-  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
-  // verify that the shared secrets are the same
-  //verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
-  encd re, se;
   uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
   plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
-  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
-  gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
-  //for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
-  for (int i = 0; i < 32; i++) {se.data[i] = cipher[i];}
-  send_encrypteddata(*(connection*)conn, &se);
-  if (receive_encrypteddata(*(connection*)conn, &re) > 0) {                                           // Handshake ^^^
-    uint32_t red[32] = {0};
-    for (int i = 0; i < 32; i++) {red[i] = re.data[i];}
-    gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
-    // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
+  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0}, red[32] = {0};
+  bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
+  bint boshrx = bcreate(), boshry = bcreate();
+  encd re, se;
+  if (((connection*)conn)->socket == -1) return (void*) - 1;                     // Handshake vvv
+  genkeypair(&alpkx, &alpky, &alsk);                         // Generate server keypair         |
+  send_publickey(*(connection*)conn, &alpkx, &alpky);        // Send public key to client       |
+  receive_publickey(*(connection*)conn, &bopkx, &bopky);     // Receive public key from client  |
+  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky);  // Generate Server shared secret   |
+  gcm_ciphertag32bit(cipher, tag, boshrx.wrd, iv, plain, aad, 32); // Encrypt data              |
+  memcpy(se.data, cipher, 32 * sizeof(uint32_t));            // Copy encrypted data             |
+  send_encrypteddata(*(connection*)conn, &se);               // Send encrypted data to client   |
+  if (receive_encrypteddata(*(connection*)conn, &re) > 0) {                      // Handshake ^^^
+    memcpy(red, re.data, 32 * sizeof(uint32_t));
+    gcm_inv_ciphertag32bit(plain2, tag2, boshrx.wrd, iv, red, aad, tag);
+    assert(memcmp(plain, plain2, 32 * sizeof(uint32_t)) == 0);
     pthread_t ssl_thread;
     if (pthread_create(&ssl_thread, NULL, server_connection_handler_ssl, (void*)conn) < 0) {
-      perror("\"[o.o]\" \t Could not create thread");
+      perror("\"[o.o]\"  Could not create thread");
     }
     pthread_join(ssl_thread, NULL);
+    printf("\"[o.o]\"  Mmmm food\n");
   }
   return 0;
 }
@@ -114,7 +105,7 @@ static void *server_connection_handler(void *conn) {
 static int server_run(const char *host, const char *port) {
   sockets sock = communication_init(host, port);
   if (bind(sock.descriptor, (struct sockaddr*)&(sock.addr), sizeof(sock.addr)) < 0) {
-    perror("\"[o.o]\" \t Bind error");
+    perror("\"[o.o]\"  Bind error");
     exit(0);
   }
   listen(sock.descriptor, 3);
@@ -128,13 +119,13 @@ int crpt_server_handle(connection conn) {
     pthread_t thread;
     conn.clisocket = &client_sock;
     if (pthread_create(&thread, NULL, server_connection_handler, (void*)&conn) < 0) {
-      perror("\"[o.o]\" \t Could not create thread");
+      perror("\"[o.o]\"  Could not create thread");
       return 1;
     }
     pthread_join(thread, NULL);
   }
   if (client_sock < 0) {
-    perror("\"[o.o]\" \t No clients connected");
+    perror("\"[o.o]\"  No clients connected");
     return 1;
   }
   return client_sock;
@@ -142,10 +133,9 @@ int crpt_server_handle(connection conn) {
 
 //
 // Initialize server
-connection crpt_server_init(const char *host, const char *port) {//, int type) {
-  int type = 1;
-  int socket_desc = server_run(host, port);
-  printf("\"[o.o]\" \t eating food...\n");
+connection crpt_server_init(const char *host, const char *port) {
+  int type = 1, socket_desc = server_run(host, port);
+  printf("\"[o.o]\"  eating food...\n");
   return connection_init(socket_desc, type);
 }
 
@@ -161,38 +151,30 @@ static void *client_connection_handler_ssl(void *conn) { // TODO: use template f
 }
 
 static void *client_connection_handler(void *conn) {
-  bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
-  bint alshrx = bcreate(), alshry = bcreate(), boshrx = bcreate(), boshry = bcreate();
-  if (((connection*)conn)->socket == -1) return (void*) - 1;                    // Handshake vvv
-  // generate client keypair
-  genkeypair(&alpkx, &alpky, &alsk); // Alice's keypair generated
-  // receive server public key from server
-  receive_publickey(*(connection*)conn, &bopkx, &bopky);
-  // send public key to server
-  send_publickey(*(connection*)conn, &alpkx, &alpky);
-  // generate shared secret
-  gensharedsecret(&alshrx, &alshry, &alsk, &alpkx, &alpky); // Alice's shared secret(but with alices private key)
-  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky); // Bob's shared secret
-  // verify that the shared secrets are the same
-  //verifysharedsecret(&alshrx, &alshry, &boshrx, &boshry, &alsk, &alsk); // Verify Alice's and Bob's shared secrets
-  encd re, se;
   uint32_t iv[32] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
   plain[32] = {0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff, 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff},
-  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0};
-  gcm_ciphertag32bit(cipher, tag, alshrx.wrd, iv, plain, aad,  32);
-  //for (int i = 0; i < 1024; i++) {re.data[i] = bcreate(); se.data[i] = bcreate();}
-  for (int i = 0; i < 32; i++) {se.data[i] = cipher[i];}
-  receive_encrypteddata(*(connection*)conn, &re);
-  uint32_t red[32] = {0};
-  for (int i = 0; i < 32; i++) {red[i] = re.data[i];}
-  gcm_inv_ciphertag32bit(plain2, tag2, alshrx.wrd, iv, red, aad, tag);
-  // assert(memcmp(plain, plain2, 8 * sizeof(uint32_t)) == 0);
-  if (send_encrypteddata(*(connection*)conn, &se) >= 0) {                                        // Handshake ^^^
+  cipher[32] = {0}, tag[32] = {0}, tag2[32] = {0}, aad[32] = {0}, plain2[32] = {0}, red[32] = {0};
+  bint alsk = bcreate(), alpkx = bcreate(), alpky = bcreate(), bopkx = bcreate(), bopky = bcreate();
+  bint boshrx = bcreate(), boshry = bcreate();
+  encd re, se;
+  if (((connection*)conn)->socket == -1) return (void*) - 1;                    // Handshake vvv
+  genkeypair(&alpkx, &alpky, &alsk);                         // Generate client keypair        |
+  receive_publickey(*(connection*)conn, &bopkx, &bopky);     // Receive server public key      |
+  send_publickey(*(connection*)conn, &alpkx, &alpky);        // Send server public key         |
+  gensharedsecret(&boshrx, &boshry, &alsk, &bopkx, &bopky);  // Generate client shared secret  |
+  gcm_ciphertag32bit(cipher, tag, boshrx.wrd, iv, plain, aad, 32); // Encrypt data             |
+  memcpy(se.data, cipher, 32 * sizeof(uint32_t));            // Copy encrypted data            |
+  receive_encrypteddata(*(connection*)conn, &re);            // Receive encrypted data         |
+  memcpy(red, re.data, 32 * sizeof(uint32_t));               // Copy received data             |
+  gcm_inv_ciphertag32bit(plain2, tag2, boshrx.wrd, iv, red, aad, tag); // Decrypt data         |
+  assert(memcmp(plain, plain2, 32 * sizeof(uint32_t)) == 0); // Assert encryption is ok        |
+  if (send_encrypteddata(*(connection*)conn, &se) >= 0) {                       // Handshake ^^^
     pthread_t ssl_thread;
     if (pthread_create(&ssl_thread, NULL, client_connection_handler_ssl, (void*)conn) < 0) {
-      perror("\"[o.o]\" \t Could not create thread");
+      perror("\"[o.o]\"  Could not create thread");
     }
     pthread_join(ssl_thread, NULL);
+    printf("\"[o.o]\"  Found food *runs away*\n");
   }
   return 0;
 }
@@ -200,7 +182,7 @@ static void *client_connection_handler(void *conn) {
 static int client_run(const char *host, const char *port) {
   sockets sock = communication_init(host, port);
   if (connect(sock.descriptor , (struct sockaddr*)&(sock.addr) , sizeof(sock.addr)) < 0) {
-    perror("\"[o.o]\" \t Connection error");
+    perror("\"[o.o]\"  Connection error");
     return 1;
   }
   return sock.descriptor;
@@ -210,7 +192,7 @@ int crpt_client_handle(connection conn) {
   pthread_t thread;
   conn.clisocket = &(conn.socket);
   if (pthread_create(&thread, NULL, client_connection_handler, (void*)&conn) < 0) {
-    perror("\"[o.o]\" \t Could not create a thread");
+    perror("\"[o.o]\"  Could not create a thread");
     return 1;
   }
   pthread_join(thread, NULL);
@@ -219,10 +201,9 @@ int crpt_client_handle(connection conn) {
 
 //
 // Initialize client
-connection crpt_client_init(const char *host, const char *port) {//, int type) {
-  printf("\"[o.o]\" \t finding food...\n");
-  int type = 1;
-  int socket_desc = client_run(host, port);
+connection crpt_client_init(const char *host, const char *port) {
+  int type = 1, socket_desc = client_run(host, port);
+  printf("\"[o.o]\"  finding food...\n");
   return connection_init(socket_desc, type);
 }
 
