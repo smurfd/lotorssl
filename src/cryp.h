@@ -37,15 +37,6 @@ struct asn {
 #define BLOCK 1024 // Imitate pythons %. -1 % 5 = 4, not -1
 #define KLEN 4096
 #define LEN 4096
-int crypto_init(const char *host, const char *port, bool b);
-void crypto_transfer_key(int s, bool snd, head *h, key *k);
-void crypto_transfer_data(const int s, void* data, head *h, bool snd, u64 len);
-void crypto_gen_share(key *k1, key *k2, u64 p, bool srv);
-key crypto_gen_keys(u64 g, u64 p);
-int crypto_gen_keys_local(void);
-int crypto_srv_listen(int s, sock *cli);
-void cryption(u64 data, key k, u64 *enc);
-void crypto_end(int s);
 
 u64 crypto_handle_cert(char d[LEN], const char *cert);
 u64 crypto_handle_asn(char c[LEN], const char *cert);

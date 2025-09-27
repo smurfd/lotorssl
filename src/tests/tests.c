@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
@@ -112,40 +113,6 @@ uint8_t test_certkey(void) {
   base64dec(s3, s0, strlen(s0));
   base64enc(s1, s2, strlen("smurfd and more stuff"));
   assert(strcmp(s1, s0) == 0);
-  return 1;
-}
-
-uint8_t test_certcli(void) {
-  int s = crypto_init("127.0.0.1", "9998", false);
-  if (s >= 0) {
-    u64 dat[BLOCK], cd[BLOCK];
-    key k1, k2;
-    head h;
-    crypto_transfer_key(s, false, &h, &k1);
-    k2 = crypto_gen_keys(h.g, h.p);
-    crypto_transfer_key(s, true, &h, &k2);
-    crypto_gen_share(&k1, &k2, h.p, false);
-    printf("share : 0x%.16llx\n", k1.shar);
-    for (u64 i = 0; i < 12; i++) {
-      dat[i] = (u64)i; cryption(dat[i], k1, &cd[i]);
-    }
-    crypto_transfer_data(s, cd, &h, true, 11);
-    crypto_end(s);
-  }
-  // locally generate two keypairs
-  srand(time(0));
-  crypto_gen_keys_local();
-  return 1;
-}
-
-uint8_t test_certsrv(void) {
-  int s = crypto_init("127.0.0.1", "9998", true);
-  sock *cli = NULL;
-  if (crypto_srv_listen(s, cli) < 0) {
-    printf("Can't create a Thread\n");
-    exit(0);
-  }
-  crypto_end(s);
   return 1;
 }
 
@@ -382,6 +349,7 @@ int main(int argc, char** argv) {
     ret &= test_hash3shk();
     ret &= test_hash3shkbig();
     ret &= test_hash3shkref();
+    ret &= test_certkey();
     ret &= tester_bint_sanity();
     ret &= tester_bint_2ways_sanity();
     ret &= tester_bint_div_sanity();

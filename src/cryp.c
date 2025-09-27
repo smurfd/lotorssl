@@ -23,7 +23,6 @@ static uint8_t AC[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01, 0x02};
 static uint8_t AD[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01 ,0x2a};
 static uint8_t AE[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x03, 0x02 ,0x30};
 
-
 static uint32_t oct(int i, int inl, const uint8_t d[]) {
   if (i < inl) return d[i];
   return 0;
@@ -68,133 +67,6 @@ int base64dec(uint8_t dd[], const char *data, int inl) {
   return ol;
 }
 
-
-//
-// Receive key (clears private key if we receive it for some reason)
-static void recv_key(int s, head *h, key *k) {
-  recv(s, h, sizeof(head), 0);
-  recv(s, &k->publ, sizeof(u64), 0);
-}
-
-//
-// Send key
-static void send_key(int s, head *h, key *k) {
-  // This to ensure not to send the private key
-  send(s, h, sizeof(head), 0);
-  send(s, &k->publ, sizeof(u64), 0);
-}
-
-//
-// Server handler
-static void *srv_handler(void *sdesc) {
-  u64 dat[BLOCK], cd[BLOCK], g1 = RAND64(), p1 = RAND64();
-  int s = *(int*)sdesc;
-  if (s == -1) {return (void*)-1;}
-  key k1 = crypto_gen_keys(g1, p1), k2;
-  k2.publ = 0; k2.priv = 0; k2.shar = 0;
-  head h; h.g = g1; h.p = p1;
-  // Send and receive stuff
-  if (h.len > BLOCK) {return (void*)-1;}
-  crypto_transfer_key(s, true, &h, &k1);
-  crypto_transfer_key(s, false, &h, &k2);
-  crypto_gen_share(&k1, &k2, h.p, true);
-  printf("share : 0x%.16llx\n", k2.shar);
-  // Decrypt the data
-  crypto_transfer_data(s, &dat, &h, false, BLOCK-1);
-  for (u64 i = 0; i < 10; i++) {cryption(dat[i], k2, &cd[i]);}
-  pthread_exit(NULL);
-  return 0;
-}
-
-//
-// Encrypt and decrypt data with shared key
-void cryption(u64 data, key k, u64 *enc) {
-  (*enc) = data ^ k.shar;
-}
-
-//
-// Initialize server and client (b=true for server deamon)
-int crypto_init(const char *host, const char *port, bool b) {
-  int s = socket(AF_INET, SOCK_STREAM, 0);
-  sock_in adr;
-  memset(&adr, '\0', sizeof(adr));
-  adr.sin_family = AF_INET;
-  adr.sin_port = atoi(port);
-  adr.sin_addr.s_addr = inet_addr(host);
-  if (b == true) {bind(s, (sock*)&adr, sizeof(adr));}
-  else {if (connect(s, (sock*)&adr, sizeof(adr)) < 0) {return -1;}}
-  return s;
-}
-
-//
-// Transfer data (send and receive)
-void crypto_transfer_data(const int s, void* data, head *h, bool snd, u64 len) {
-  if (snd) {send(s, h, sizeof(head), 0); send(s, data, sizeof(u64)*len, 0);}
-  else {recv(s, h, sizeof(head), 0); recv(s, &data, sizeof(u64) * len, 0);}
-}
-
-//
-// Transfer keys (send and receive)
-void crypto_transfer_key(int s, bool snd, head *h, key *k) {
-  key tmp;
-  if (snd) {send_key(s, h, k);}
-  else { // This to ensure if we receive a private key we clear it
-    recv_key(s, h, &tmp);
-    (*k).publ = tmp.publ; (*k).shar = tmp.shar; (*k).priv = 0;
-  }
-}
-
-//
-// End connection
-void crypto_end(int s) {close(s);}
-
-//
-// Server listener
-int crypto_srv_listen(const int s, sock *cli) {
-  int c = 1, ns[sizeof(int)], len = sizeof(sock_in);
-  listen(s, 3);
-  while (c >= 1) {
-    c = accept(s, (sock*)&cli, (socklen_t*)&len);
-    pthread_t thrd;
-    *ns = c;
-    if (pthread_create(&thrd, NULL, srv_handler, (void*)ns) < 0) return -1;
-    pthread_join(thrd, NULL);
-  }
-  return c;
-}
-
-//
-// Generate the shared key
-void crypto_gen_share(key *k1, key *k2, u64 p, bool srv) {
-  if (!srv) {(*k1).shar = p % (int64_t)pow((*k1).publ, (*k2).priv);}
-  else {(*k2).shar = p % (int64_t)pow((*k2).publ, (*k1).priv);}
-}
-
-//
-// Generate a public and private keypair
-key crypto_gen_keys(u64 g, u64 p) {
-  key k;
-  k.priv = RAND64();
-  k.publ = (int64_t)pow(g, k.priv) % p;
-  return k;
-}
-
-//
-// Generate a keypair & shared key then print it (test / demo)
-int crypto_gen_keys_local(void) {
-  u64 g1 = RAND64(), g2 = RAND64(), p1 = RAND64(), p2 = RAND64(), c = 123456, d = 1, e = 1;
-  key k1 = crypto_gen_keys(g1, p1), k2 = crypto_gen_keys(g2, p2);
-  crypto_gen_share(&k1, &k2, p1, false);
-  crypto_gen_share(&k1, &k2, p1, true);
-  printf("Alice public & private key: 0x%.16llx 0x%.16llx\n", k1.publ, k1.priv);
-  printf("Bobs public & private key: 0x%.16llx 0x%.16llx\n", k2.publ, k2.priv);
-  printf("Alice & Bobs shared key: 0x%.16llx 0x%.16llx\n", k1.shar, k2.shar);
-  cryption(c, k1, &d);
-  cryption(d, k2, &e);
-  printf("Before:  0x%.16llx\nEncrypt: 0x%.16llx\nDecrypt: 0x%.16llx\n",c,d,e);
-  return c == e;
-}
-
 // ASN.1
 // https://en.wikipedia.org/wiki/ASN.1
 // https://www.rfc-editor.org/rfc/rfc6025
@@ -220,7 +92,10 @@ static u64 get_data(char d[], const char c[], const u64 h, const u64 f, const u6
 }
 
 static u64 read_cert(char c[], const char *fn, const bool iscms) {
-  FILE* ptr = fopen(fn, "r");
+  FILE *pt = fopen("../.build/ca.key", "r"); fclose(pt); sleep(2); // TODO: ugly shit to handle openfile on mac??
+  FILE *ptr;
+  if (iscms) ptr = fopen(fn, "rb");
+  else ptr = fopen(fn, "r");
   u64 len = 0;
   if (ptr == NULL) {printf("Can't find cert: %s\n", fn);}
   if (iscms) {
@@ -313,6 +188,7 @@ static int32_t der_decode(asn o[], asn oobj[], const uint8_t *der, uint32_t derl
   }
   return objcnt;
 }
+
 //
 // Error "handler"
 int err(char *s) {
@@ -321,7 +197,7 @@ int err(char *s) {
 //
 // Output and parse the asn header.
 static int dump_and_parse(const uint8_t *cmsd, const uint32_t fs) {
-  int32_t objcnt = objcnt = der_decode(NULL, NULL, (uint8_t*)cmsd, fs, 0, 0),m = 1;
+  int32_t objcnt = objcnt = der_decode(NULL, NULL, (uint8_t*)cmsd, fs, 0, 0), m = 1;
   asn cms[512];
   if (objcnt < 0) return err("Objects");
   if (der_decode(cms, cms, cmsd, fs, objcnt, 1) < 0) return err("Parse");
