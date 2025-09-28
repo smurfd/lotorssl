@@ -11,7 +11,7 @@ mkcrt:
 	openssl ecparam -name secp384r1 -genkey -noout -out ${BUILD}/ca.key
 
 tests:
-	${CC} -o ${BUILD}/tests tests.c ${BUILD}/ciph.o ${BUILD}/hash.o ${BUILD}/cryp.o ${BUILD}/lotormath.o ${BUILD}/bmec.o -lm -lpthread
+	${CC} -o ${BUILD}/tests tests.c ${BUILD}/ciph.o ${BUILD}/hash.o ${BUILD}/crpt.o ${BUILD}/lotormath.o ${BUILD}/bmec.o -lm -lpthread
 
 runner:
 	${BUILD}/tests

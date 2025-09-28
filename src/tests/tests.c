@@ -11,7 +11,7 @@
 #include "../lotormath/src/lotormath.h"
 #include "../ciph.h"
 #include "../hash.h"
-#include "../cryp.h"
+#include "../crpt.h"
 #include "../bmec.h"
 
 bint one = {.wrd[0] = 1, .siz = 1, .neg = 0, .cap = 1};

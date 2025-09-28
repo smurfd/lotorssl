@@ -1,4 +1,5 @@
 // Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
+/*
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -259,3 +260,4 @@ u64 crypto_handle_asn(char c[LEN], const char *cert) {
 // What im looking for:
 // https://github.com/gh2o/tls_mini
 // asn1 stolen / inspired from https://gitlab.com/mtausig/tiny-asn1
+*/

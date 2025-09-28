@@ -1,4 +1,5 @@
 // Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
+/*
 #ifndef CRYP_H
 #define CRYP_H 1
 #include <stdbool.h>
@@ -46,7 +47,7 @@ int base64dec(uint8_t dd[], const char *data, int inl);
 
 // Very simple handshake
 // asn1 - stolen / inspired from https://gitlab.com/mtausig/tiny-asn1
-
+*/
 /*
 ```
     |                                                     |                    .
