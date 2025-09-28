@@ -6,8 +6,8 @@
 #include <inttypes.h>
 #include <netinet/in.h>
 #include "bmec.h"
+#include "tooling.h"
 
-#define u64 unsigned long long int // because linux uint64_t is not same as on mac
 #define A1INTEGER 0x02 // Header byte of the ASN.1 type INTEGER
 #define A1BITSTRI 0x03 // Header byte of the ASN.1 type BIT STRING
 #define A1OCTSTRI 0x04 // Header byte of the ASN.1 type OCTET STRING
@@ -84,11 +84,8 @@ connection crpt_server_init(const char *host, const char *port);
 void crpt_server_end(connection c);
 int crpt_server_handle(connection conn);
 
-// Tooling
 u64 crypto_handle_cert(char d[LEN], const char *cert);
 u64 crypto_handle_asn(char c[LEN], const char *cert);
-int base64enc(char ed[], const uint8_t *data, int inl);
-int base64dec(uint8_t dd[], const char *data, int inl);
 #endif
 // Very simple handshake
 
