@@ -1,7 +1,7 @@
 CC := gcc -O3 -ffast-math -Wall -Wextra -pedantic -std=c99 -march=native
 BUILD := .build
 SUBMODULES := lotormath
-MODULES := mkbuilddir checksubmodules cryp hash ciph ec crpt crpt_srv crpt_cli
+MODULES := mkbuilddir checksubmodules hash ciph ec crpt crpt_srv crpt_cli
 
 all: ${MODULES} test
 local: ${MODULES} test_local
@@ -20,9 +20,6 @@ checksubmodules:
 		git submodule init; \
 		git submodule update; \
 	done
-
-cryp:
-	${CC} -c cryp.c -o ${BUILD}/cryp.o
 
 hash:
 	${CC} -c hash.c -o ${BUILD}/hash.o

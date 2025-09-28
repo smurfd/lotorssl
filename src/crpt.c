@@ -12,6 +12,17 @@
 #include "crpt.h"
 
 //
+// Static variables
+static char enc[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+  'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+  's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+static uint8_t AA[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x06,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x06};
+static uint8_t AB[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01};
+static uint8_t AC[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01, 0x02};
+static uint8_t AD[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01 ,0x2a};
+static uint8_t AE[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x03, 0x02 ,0x30};
+
+//
 // Communication init
 sockets communication_init(const char *host, const char *port) {
   sockets sock;
@@ -214,33 +225,6 @@ void crpt_client_end(connection c) {
 }
 
 // Very simple handshake
-
-
-// Auth: smurfd, 2023 More reading & Borrow/Stolen parts read at the bottom of the file; 2 spacs indent; 120 width    //
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <inttypes.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include "cryp.h"
-
-// Static variables
-static char enc[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-  'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-  's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
-static uint8_t AA[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x06,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x06};
-static uint8_t AB[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01};
-static uint8_t AC[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01, 0x02};
-static uint8_t AD[] = {0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01 ,0x2a};
-static uint8_t AE[] = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x03, 0x02 ,0x30};
-
 static uint32_t oct(int i, int inl, const uint8_t d[]) {
   if (i < inl) return d[i];
   return 0;
@@ -477,3 +461,59 @@ u64 crypto_handle_asn(char c[LEN], const char *cert) {
 // What im looking for:
 // https://github.com/gh2o/tls_mini
 // asn1 stolen / inspired from https://gitlab.com/mtausig/tiny-asn1
+
+/*
+//
+// Write cert to file
+static u64 write_crt(FILE* ptr, const uint8_t data[]) {
+  int i = 4;
+  fprintf(ptr, "-----BEGIN CERTIFICATE-----\n");
+  fprintf(ptr, "MII");
+  while (i < 1779) {
+    fputc('y', ptr);
+    if (i % 64 == 0) fputc('\n', ptr);
+    i++;
+  }
+  fprintf(ptr, "==\n");
+  fprintf(ptr, "-----END CERTIFICATE-----\n");
+  return 1;
+}
+
+//
+// Write key to file
+// Public key: https://datatracker.ietf.org/doc/html/rfc5480
+// Private key: https://datatracker.ietf.org/doc/html/rfc5915.html
+static u64 write_key(FILE* ptr, const uint8_t data[]) {
+  char tmp[257] = {0};
+  uint8_t d[BYTES] = {0};
+  int i = 10, j = 0;
+  bit_unpack(d, (u64*)data);
+  j = base64enc(tmp, d, 164);
+  fprintf(ptr, "-----BEGIN EC PRIVATE KEY-----\n");
+  while (i < j) {
+    if (i % 64 == 0) fprintf(ptr, "\n");
+    fprintf(ptr, "%c", tmp[(i++) - 10]);
+  }
+  fprintf(ptr, "=\n-----END EC PRIVATE KEY-----\n");
+  return 1;
+}
+
+//
+// Write cms to file
+static u64 write_cms(FILE* ptr, const uint8_t data[]) {
+  fprintf(ptr, "%s\n", data);
+  return 1;
+}
+
+//
+// Write certificates/keys/cms
+u64 keys_write(char *fn, uint8_t data[], const int type) {
+  FILE* ptr = fopen(fn, "w");
+  u64 ret = 0;
+  if (type == 1) ret = write_crt(ptr, data); // Certificate
+  if (type == 2) ret = write_key(ptr, data); // Private key
+  if (type == 3) ret = write_cms(ptr, data); // CMS
+  fclose(ptr);
+  return ret;
+}
+*/
