@@ -220,34 +220,87 @@ connection crpt_client_init(const char *host, const char *port) {
 void crpt_client_end(connection c) {
   close(c.socket);
 }
-
 // Very simple handshake
+
+//
+// Write cert to file
+static u64 write_crt(FILE* ptr, const uint8_t *data) {
+  int i = 4;
+  fprintf(ptr, "-----BEGIN CERTIFICATE-----\n");
+  fprintf(ptr, "MII");
+  while (i < 1779) {
+    fputc(data[i], ptr);
+    if (i % 64 == 0) fputc('\n', ptr);
+    i++;
+  }
+  fprintf(ptr, "==\n");
+  fprintf(ptr, "-----END CERTIFICATE-----\n");
+  return 1;
+}
+
+//
+// Write key to file
+// Public key: https://datatracker.ietf.org/doc/html/rfc5480
+// Private key: https://datatracker.ietf.org/doc/html/rfc5915.html
+static u64 write_key(FILE* ptr, const uint8_t *data) {
+  char tmp[257] = {0};
+  uint8_t d[6] = {0};
+  int i = 10, j = 0;
+  bit_unpack(d, (u64*)data);
+  j = base64enc(tmp, d, 164);
+  fprintf(ptr, "-----BEGIN EC PRIVATE KEY-----\n");
+  while (i < j) {
+    if (i % 64 == 0) fprintf(ptr, "\n");
+    fprintf(ptr, "%c", tmp[(i++) - 10]);
+  }
+  fprintf(ptr, "=\n-----END EC PRIVATE KEY-----\n");
+  return 1;
+}
+
+//
+// Write cms to file
+static u64 write_cms(FILE* ptr, const uint8_t *data) {
+  fprintf(ptr, "%s\n", data);
+  return 1;
+}
+
+//
+// Write certificates/keys/cms
+u64 keys_write(char *fn, uint8_t *data, const int type) {
+  FILE* ptr = fopen(fn, "w");
+  u64 ret = 0;
+  if (type == 1) ret = write_crt(ptr, data); // Certificate
+  if (type == 2) ret = write_key(ptr, data); // Private key
+  if (type == 3) ret = write_cms(ptr, data); // CMS
+  fclose(ptr);
+  return ret;
+}
 
 // ASN.1
 // https://en.wikipedia.org/wiki/ASN.1
 // https://www.rfc-editor.org/rfc/rfc6025
 // https://www.rfc-editor.org/rfc/rfc5912
-static u64 get_header(uint8_t h[], const char c[]) {
+static u64 get_header(uint8_t *h, const char *c) {
   u64 i = strlen(c) - strlen(strstr(c, "-----B"));
   // Check for the start of -----BEGIN CERTIFICATE-----
   while (c[i] != '\n') {h[i] = c[i]; i++;} h[i] = '\0';
   return i + 1;
 }
 
-static u64 get_footer(uint8_t f[], const char c[], const u64 len) {
+static u64 get_footer(uint8_t *f, const char *c, const u64 len) {
   u64 i = 0, j = strlen(c) - strlen(strstr(c, "-----E"));
   // check for the start of -----END CERTIFICATE-----
   while (c[i] != '\n' && i <= len) {f[i] = c[j]; i++; j++;} f[i-2] = '\0';
   return i + 1;
 }
 
-static u64 get_data(char d[], const char c[], const u64 h, const u64 f, const u64 l) {
+static u64 get_data(char *d, const char *c, const u64 h, const u64 f, const u64 l) {
   u64 co = l - f - h, i = 0;
   while (i < co) {d[i] = c[h + i]; i++;} d[i] = '\0';
   return i;
 }
 
-static u64 read_cert(char c[], const char *fn, const bool iscms) {
+static u64 read_cert(char *c, const char *fn, const bool iscms) {
   FILE *pt = fopen("../.build/ca.key", "r"); fclose(pt); sleep(2); // TODO: ugly shit to handle openfile on mac??
   FILE *ptr;
   if (iscms) ptr = fopen(fn, "rb");
@@ -266,7 +319,7 @@ static u64 read_cert(char c[], const char *fn, const bool iscms) {
   return len;
 }
 
-static void print_cert(const u64 len, const uint8_t h[], const uint8_t f[], const char d[]) {
+static void print_cert(const u64 len, const uint8_t *h, const uint8_t *f, const char *d) {
   printf("Length %llu\n", len); printf("Header: %s\n", h);
   printf("Data:\n%s\n", d); printf("Footer: %s\n", f);
 }
@@ -310,14 +363,14 @@ static uint32_t get_len(uint32_t *off, const uint8_t *data, uint32_t len, const 
 
 //
 // Initialize the asn struct
-static void init_asn(asn asn[]) {
+static void init_asn(asn *asn) {
   asn->type = 0; asn->len = 0; asn->pos = 0; asn->data = NULL;
 }
 
 //
 // dec = false, Count the der objects
 // dec = true, Decode the der encrypted data
-static int32_t der_decode(asn o[], asn oobj[], const uint8_t *der, uint32_t derlen, uint32_t oobjc, bool dec) {
+static int32_t der_decode(asn *o, asn *oobj, const uint8_t *der, uint32_t derlen, uint32_t oobjc, bool dec) {
   uint32_t deroff=0,derenclen=get_len(&deroff,der,derlen,1),childrenlen=0,derdatl=derenclen-deroff, childoff=0,objcnt=1;
   const uint8_t *derdat = (der + deroff);
   if (dec) {init_asn(o); if (o == NULL) return -1; o->type = *der; o->len = derdatl; o->data = derdat;}
@@ -394,7 +447,7 @@ static int dump_and_parse(const uint8_t *cmsd, const uint32_t fs) {
   return 0;
 }
 
-u64 crypto_handle_cert(char d[LEN], const char *cert) {
+u64 crypto_handle_cert(char *d, const char *cert) {
   uint8_t h[36], f[36];
   char crt[LEN];
   u64 len = read_cert(crt, cert, 0), head = get_header(h, crt);
@@ -406,7 +459,7 @@ u64 crypto_handle_cert(char d[LEN], const char *cert) {
 
 //
 // public function to handle asn cert
-u64 crypto_handle_asn(char c[LEN], const char *cert) {
+u64 crypto_handle_asn(char *c, const char *cert) {
   return dump_and_parse((uint8_t*)c, read_cert(c, cert, 1));
 }
 
@@ -415,59 +468,3 @@ u64 crypto_handle_asn(char c[LEN], const char *cert) {
 // What im looking for:
 // https://github.com/gh2o/tls_mini
 // asn1 stolen / inspired from https://gitlab.com/mtausig/tiny-asn1
-
-/*
-//
-// Write cert to file
-static u64 write_crt(FILE* ptr, const uint8_t data[]) {
-  int i = 4;
-  fprintf(ptr, "-----BEGIN CERTIFICATE-----\n");
-  fprintf(ptr, "MII");
-  while (i < 1779) {
-    fputc('y', ptr);
-    if (i % 64 == 0) fputc('\n', ptr);
-    i++;
-  }
-  fprintf(ptr, "==\n");
-  fprintf(ptr, "-----END CERTIFICATE-----\n");
-  return 1;
-}
-
-//
-// Write key to file
-// Public key: https://datatracker.ietf.org/doc/html/rfc5480
-// Private key: https://datatracker.ietf.org/doc/html/rfc5915.html
-static u64 write_key(FILE* ptr, const uint8_t data[]) {
-  char tmp[257] = {0};
-  uint8_t d[BYTES] = {0};
-  int i = 10, j = 0;
-  bit_unpack(d, (u64*)data);
-  j = base64enc(tmp, d, 164);
-  fprintf(ptr, "-----BEGIN EC PRIVATE KEY-----\n");
-  while (i < j) {
-    if (i % 64 == 0) fprintf(ptr, "\n");
-    fprintf(ptr, "%c", tmp[(i++) - 10]);
-  }
-  fprintf(ptr, "=\n-----END EC PRIVATE KEY-----\n");
-  return 1;
-}
-
-//
-// Write cms to file
-static u64 write_cms(FILE* ptr, const uint8_t data[]) {
-  fprintf(ptr, "%s\n", data);
-  return 1;
-}
-
-//
-// Write certificates/keys/cms
-u64 keys_write(char *fn, uint8_t data[], const int type) {
-  FILE* ptr = fopen(fn, "w");
-  u64 ret = 0;
-  if (type == 1) ret = write_crt(ptr, data); // Certificate
-  if (type == 2) ret = write_key(ptr, data); // Private key
-  if (type == 3) ret = write_cms(ptr, data); // CMS
-  fclose(ptr);
-  return ret;
-}
-*/

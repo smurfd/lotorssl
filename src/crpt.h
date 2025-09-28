@@ -84,8 +84,9 @@ connection crpt_server_init(const char *host, const char *port);
 void crpt_server_end(connection c);
 int crpt_server_handle(connection conn);
 
-u64 crypto_handle_cert(char d[LEN], const char *cert);
-u64 crypto_handle_asn(char c[LEN], const char *cert);
+u64 crypto_handle_cert(char *d, const char *cert);
+u64 crypto_handle_asn(char *c, const char *cert);
+u64 keys_write(char *fn, uint8_t *data, const int type);
 #endif
 // Very simple handshake
 
