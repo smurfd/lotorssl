@@ -1,6 +1,5 @@
 #include <stdint.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
 #include "tooling.h"
 
 // Static variables
@@ -55,8 +54,8 @@ void bit_hex_str(char hs[], const uint8_t *d, const int len) {
 // ((uint64_t)dig[3] << 32) |
 // ((uint64_t)dig[4] << 24) |
 // ((uint64_t)dig[5] << 16) |
-// ((uint64_t)dig[6] << 8) |
-// (uint64_t)dig[7];
+// ((uint64_t)dig[6] <<  8) |
+// ((uint64_t)dig[7] <<  0);
 //
 // Bit packing function uint8 to uint64
 void bit_pack(u64 big[], const uint8_t byte[]) {
@@ -92,13 +91,13 @@ void bit_unpack(uint8_t byte[], const u64 big[]) {
 int base64enc(char ed[], const uint8_t *data, int inl) {
   int tab[] = {0, 2, 1}, ol = 4 * ((inl + 2) / 3);
   for (int i = 0, j = 0; i < inl;) {
-    uint32_t a = oct(i++, inl, data), b = oct(i++, inl, data), c = oct(i++, inl, data),tri = (a << 0x10)+(b << 0x08) + c;
-    for (int k = 3; k >=0; k--) {
+    uint32_t a = oct(i++, inl, data), b = oct(i++, inl, data), c = oct(i++, inl, data), tri = (a << 0x10) + (b << 0x08) + c;
+    for (int k = 3; k >= 0; k--) {
       ed[j++] = enc[(tri >> k * 6) & 0x3f];
     }
   }
   for (int i = 0; i < tab[inl % 3]; i++) {
-    ed[ol - 1 - i] = '=';
+    ed[ol - i - 1] = '=';
   }
   ed[ol] = '\0';
   return ol;
@@ -126,19 +125,19 @@ int base64dec(uint8_t dd[], const char *data, int inl) {
 //
 // urandom generate u64
 u64 u64rnd(void) {
+  FILE *f = fopen("/dev/urandom", "r");
   u64 f7 = 0x7fffffffffffffff;
-  int r[5], f = open("/dev/urandom", O_RDONLY);
-  int rr = read(f, &r, sizeof r);
-  close(f);
+  int r[5], rr = fread(&r, sizeof r, 1, f);
+  fclose(f);
   if (rr < 0) return -1;
   return (r[0] & f7) << 48 ^ (r[1] & f7) << 35 ^ (r[2] & f7) << 22 ^ (r[3] & f7) << 9 ^ (r[4] & f7) >> 4;
 }
 
 void u64rnd_array(uint8_t h[], u64 k[], int len) {
+  FILE *f = fopen("/dev/urandom", "r");
   u64 f7 = 0x7fffffffffffffff;
-  int r[2*len], f = open("/dev/urandom", O_RDONLY);
-  int rr = read(f, &r, sizeof r);
-  close(f);
+  int r[2*len], rr = fread(&r, sizeof r, 1, f);
+  fclose(f);
   if (rr >= 0)
   for (int i = 0; i < len; ++i) {
     h[i] = (uint8_t)(r[i] & f7);
