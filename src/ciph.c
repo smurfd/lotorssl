@@ -677,6 +677,33 @@ void gcm_inv_ciphertag32bit(uint32_t *plain, uint32_t *t, const uint32_t *key, c
   free(bh);
 }
 
+void gcm_write_key2file(const char *fn, const uint8_t *key, const uint8_t *iv) {
+  FILE *f = fopen(fn, "wb");
+  fwrite(key, sizeof(uint8_t), 32, f);
+  fwrite(iv, sizeof(uint8_t), 32, f);
+  fclose(f);
+}
+
+void gcm_read_key4file(uint8_t *key, uint8_t *iv, const char *fn) {
+  FILE *f = fopen(fn, "rb");
+  fread(key, sizeof(uint8_t), 32, f);
+  fread(iv, sizeof(uint8_t), 32, f);
+  fclose(f);
+}
+
+void gcm_write_key2file32bit(const char *fn, const uint32_t *key, const uint32_t *iv) {
+  FILE *f = fopen(fn, "wb");
+  fwrite(key, sizeof(uint32_t), 32, f);
+  fwrite(iv, sizeof(uint32_t), 32, f);
+  fclose(f);
+}
+
+void gcm_read_key4file32bit(uint32_t *key, uint32_t *iv, const char *fn) {
+  FILE *f = fopen(fn, "rb");
+  fread(key, sizeof(uint32_t), 32, f);
+  fread(iv, sizeof(uint32_t), 32, f);
+  fclose(f);
+}
 // Code grabbed from https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf and massaged
 
 // good read:
